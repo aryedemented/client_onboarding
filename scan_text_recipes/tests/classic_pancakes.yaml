@@ -1,0 +1,79 @@
+edges:
+- from: all-purpose flour
+  instructions: In a bowl, whisk together with sugar, baking powder, baking soda,
+    and salt
+  to: batter
+- from: sugar
+  instructions: In a bowl, whisk together with flour, baking powder, baking soda,
+    and salt
+  to: batter
+- from: baking powder
+  instructions: In a bowl, whisk together with flour, sugar, baking soda, and salt
+  to: batter
+- from: baking soda
+  instructions: In a bowl, whisk together with flour, sugar, baking powder, and salt
+  to: batter
+- from: salt
+  instructions: In a bowl, whisk together with flour, sugar, baking powder, and baking
+    soda
+  to: batter
+- from: buttermilk
+  instructions: In another bowl, mix with milk, egg, and melted butter
+  to: batter
+- from: milk
+  instructions: In another bowl, mix with buttermilk, egg, and melted butter
+  to: batter
+- from: egg
+  instructions: In another bowl, mix with buttermilk, milk, and melted butter
+  to: batter
+- from: melted butter
+  instructions: In another bowl, mix with buttermilk, milk, and egg
+  to: batter
+- from: batter
+  instructions: Cook on a greased pan over medium heat for 30 seconds until bubbles
+    form, then flip and cook the other side
+  to: greased pan
+- from: greased pan
+  instructions: Set to medium heat for cooking
+  to: stove
+ingredients:
+- name: all-purpose flour
+  quantity: 1 cup
+  remarks: ''
+- name: sugar
+  quantity: 2 tbsp
+  remarks: ''
+- name: baking powder
+  quantity: 1 tsp
+  remarks: ''
+- name: baking soda
+  quantity: 1/2 tsp
+  remarks: ''
+- name: salt
+  quantity: 1/4 tsp
+  remarks: ''
+- name: buttermilk
+  quantity: 3/4 cup
+  remarks: ''
+- name: milk
+  quantity: 1/4 cup
+  remarks: ''
+- name: egg
+  quantity: 1 large
+  remarks: ''
+- name: melted butter
+  quantity: 2 tbsp
+  remarks: ''
+- name: batter
+  quantity: combined
+  remarks: mix until just combined
+resources:
+- name: bowl
+  preparation_time: 0 min
+  remarks: for mixing ingredients
+- name: greased pan
+  preparation_time: 0 min
+  remarks: for cooking pancakes
+- name: stove
+  preparation_time: 0 min
+  remarks: set to medium heat

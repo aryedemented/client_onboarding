@@ -1,0 +1,6 @@
+{% set force_ingredients = True %}
+{% set force_resources = True %}
+{% set setup_config = "D:\\Projects\\Kaufmann_and_Co\\recepies\\scan_code\\ScanRecepies\\scan_text_recipes\\client_configs\\aroma\\test_setup_config.yaml" %}
+{% set model_interface_class = "RemoteAPIModelInterface" %}
+{% set language = "English" %}
+

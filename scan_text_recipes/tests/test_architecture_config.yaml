@@ -1,0 +1,35 @@
+MODEL_INTERFACE:
+  ModelInterface
+PREPROCESSORS:
+  - TextCleaner
+  - TextSimplifier
+MODEL_PROMPTS:
+  - DefaultPromptsContainer
+
+VALIDATORS:
+  - IngredientValidator:
+      UNITS_SYSTEM: MKS
+      FIELDS:
+        - quantity:
+          - NotNull
+          - TypeFloat
+  - ResourceValidator:
+      FIELDS:
+        - temperature:
+            - TypeFloat
+        - preparation_time:
+            - TypeFloat
+            - NotNull
+        - occupancy:
+            - TypeFloat
+            - NotNull
+  - ActionsValidation:
+      FIELDS:
+        - from_type:
+        - to_type:
+        - from_id:
+          - TypeInt
+          - NotNull
+        - to_id:
+          - TypeInt
+          - NotNull

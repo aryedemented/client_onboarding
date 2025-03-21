@@ -1,0 +1,56 @@
+language: {{ language }}
+PROCESSING_PIPELINE:
+  PRE_PROCESSORS:
+    - TextCleaner:
+        language: {{ language }}
+    - TextSimplifier:
+        max_tokens: 10000
+        language: {{ language }}
+        model_interface: {{ model_interface_class }}
+  PROCESSOR:
+    DefaultMainProcessor:
+      model_interface: {{ model_interface_class }}
+      prompts:
+        DefaultPromptsContainer:
+          config: {{ setup_config }}
+          force_ingredients: {{ force_ingredients | default(False) }}
+          force_resources: {{ force_resources | default(False) }}
+  POST_PROCESSORS:
+    - PostProcessorsLoopContainer:
+        iterations: 1
+        language: {{ language }}
+        config: {{ setup_config }}
+        segment_config:
+          - RemoveFakeIngredients:
+          - RemoveFakeResources:
+          - IngredientRecipeFixer:
+              model_interface: {{ model_interface_class }}
+              config:
+                FIELDS:
+                  - quantity:
+                    - NotNull
+                    - TypeFloat
+    - ResourceRecipeFixer:
+        model_interface: {{ model_interface_class }}
+        config:
+          FIELDS:
+            - temperature:
+                - TypeFloat
+            - preparation_time:
+                - NotNull
+                - TypeFloat
+            - occupancy:
+                - NotNull
+                - TypeFloat
+#    - ActionsRecipeFixer:
+#        model_interface: {{ model_interface_class }}
+#        config:
+#          FIELDS:
+#            - from_type:
+#            - to_type:
+#            - from_id:
+#              - NotNull
+#              - TypeInt
+#            - to_id:
+#              - NotNull
+#              - TypeInt
