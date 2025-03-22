@@ -4,3 +4,16 @@
 /structured_recipes/
 /recipes/
 /scan_text_recipes/config/db_connect_config.yaml
+.idea/misc.xml
+.idea/modules.xml
+.idea/QuickJinja_project.xml
+.idea/ScanRecepies.iml
+.idea/vcs.xml
+.idea/workspace.xml
+.idea/inspectionProfiles/profiles_settings.xml
+scan_text_recipes/src/__pycache__/__init__.cpython-310.pyc
+scan_text_recipes/src/__pycache__/__init__.cpython-310.pyc
+scan_text_recipes/src/main_processors/__pycache__/__init__.cpython-310.pyc
+scan_text_recipes/src/__pycache__/__init__.cpython-310.pyc
+scan_text_recipes/src/__pycache__/__init__.cpython-310.pyc
+scan_text_recipes/src/__pycache__/loop_container.cpython-310.pyc
