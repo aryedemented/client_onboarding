@@ -20,3 +20,8 @@ scan_text_recipes/utils/logger/__pycache__/*
 *.py[cod]
 __pycache__/
 *.pyc
+scan_text_recipes/src/model_interface/__pycache__/remote_model_interface.cpython-310.pyc
+scan_text_recipes/src/prompt_organizers/__pycache__/base_prompts_container.cpython-310.pyc
+scan_text_recipes/src/prompt_organizers/__pycache__/default_prompt_container.cpython-310.pyc
+scan_text_recipes/src/prompt_organizers/__pycache__/fixer_prompt_container.cpython-310.pyc
+scan_text_recipes/utils/__pycache__/utils.cpython-310.pyc
