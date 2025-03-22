@@ -1,4 +1,9 @@
 language: {{ language }}
+logger: {{ logger }}
+setup_config: {{ setup_config }}
+DATABASE_INTERFACE:
+  {{db_interface_class}}:
+    db_config: {{ db_config }}
 PROCESSING_PIPELINE:
   PRE_PROCESSORS:
     - TextCleaner:
@@ -12,17 +17,15 @@ PROCESSING_PIPELINE:
       model_interface: {{ model_interface_class }}
       prompts:
         DefaultPromptsContainer:
-          config: {{ setup_config }}
           force_ingredients: {{ force_ingredients | default(False) }}
           force_resources: {{ force_resources | default(False) }}
   POST_PROCESSORS:
     - PostProcessorsLoopContainer:
         iterations: 1
         language: {{ language }}
-        config: {{ setup_config }}
         segment_config:
-          - RemoveFakeIngredients:
-          - RemoveFakeResources:
+#          - RemoveFakeIngredients:
+#          - RemoveFakeResources:
           - IngredientRecipeFixer:
               model_interface: {{ model_interface_class }}
               config:

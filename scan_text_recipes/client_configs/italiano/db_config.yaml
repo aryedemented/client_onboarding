@@ -1,0 +1,110 @@
+# this is data transformation and database configuration file
+
+# Database schema with explicit table creation order
+TABLES_CREATION_ORDER:
+  - dishes
+  - resources
+  - ingredients
+  - ingredients_allergens
+  - recipe_resources
+  - recipe_ingredients
+  - resource_ingredient_mapping
+
+CATEGORIES:
+  dish_types_enum:
+    - "Appetizer"
+    - "Side Dish"
+    - "Main Dish"
+    - "Desert"
+
+  ingredient_types_enum:
+    - "Diary"
+    - "Fish"
+    - "Meat"
+    - "Vegetable"
+    - "Fruit"
+    - "Compound"
+    - "Other"
+
+  quantity_units_enum:
+    - "gr"
+    - "ml"
+    - "pieces"
+    - "tsp"
+    - "tbsp"
+    - "decks"
+
+  allergens_types_enum:
+    - "Gluten"
+    - "Lactose"
+
+  node_type_enum:
+    - "resource"
+    - "ingredient"
+
+# database schema
+RECIPE_DATABASE:
+  ### Data tables
+  # Dish Recipies - main table
+  dishes:
+    id: "SERIAL PRIMARY KEY"
+    name: "TEXT NOT NULL UNIQUE CHECK (name <> '')"
+    description: "TEXT"
+    category_id: "dish_types_enum NOT NULL"
+
+  resources:
+    id: "SERIAL PRIMARY KEY"
+    name: "TEXT NOT NULL UNIQUE CHECK (name <> '')"
+    resource_description: "TEXT"
+    volume: "FLOAT NOT NULL"
+    max_temperature: "FLOAT"
+    capacity_units: "quantity_units_enum NOT NULL"
+
+  ingredients:
+    id: "SERIAL PRIMARY KEY"
+    name: "TEXT NOT NULL UNIQUE CHECK (name <> '')"
+    ingredient_description: "TEXT"
+    category_id: "ingredient_types_enum NOT NULL"
+    units: "quantity_units_enum NOT NULL"
+
+  ingredients_allergens:
+    id: "SERIAL PRIMARY KEY"
+    allergen_id: "allergens_types_enum NOT NULL"
+    ingredient_id: "INT REFERENCES ingredients(id) NOT NULL"
+
+  recipe_resources:
+    id: "SERIAL PRIMARY KEY"
+    dish_id: "INT REFERENCES dishes(id) ON DELETE SET NULL"
+    resource_id: "INT REFERENCES resources(id) ON DELETE SET NULL"
+    preparation_time: "FLOAT NOT NULL"
+    temperature: "FLOAT"
+    occupancy: "FLOAT NOT NULL"
+    instructions: "TEXT"
+
+  recipe_ingredients:
+    id: "SERIAL PRIMARY KEY"
+    dish_id: "INT REFERENCES dishes(id) ON DELETE SET NULL"
+    ingredient_id: "INT  REFERENCES ingredients(id) ON DELETE SET NULL"
+    quantity: "FLOAT NOT NULL"
+    instructions: "TEXT"
+
+  resource_ingredient_mapping:
+    id: "SERIAL PRIMARY KEY"
+    dish_id: "INT REFERENCES dishes(id) ON DELETE SET NULL"
+    from_node: "node_type_enum"
+    to_node: "node_type_enum"
+    from_id: "INT NOT NULL"
+    to_id: "INT NOT NULL"
+    instructions: "TEXT"
+
+
+CONSTRAINTS:
+  recipe_ingredients:
+    - "ALTER TABLE recipe_ingredients
+      ADD CONSTRAINT unique_recipe_ingredient UNIQUE (dish_id, ingredient_id, quantity);"
+  recipe_resources:
+    - "ALTER TABLE recipe_resources
+      ADD CONSTRAINT unique_recipe_resource UNIQUE (dish_id, resource_id, preparation_time, temperature, occupancy, instructions);"
+  resource_ingredient_mapping:
+    - "ALTER TABLE resource_ingredient_mapping
+      ADD CONSTRAINT unique_resource_ingredient_mapping UNIQUE (dish_id, from_node, from_id, to_node, to_id, instructions);"

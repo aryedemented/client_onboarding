@@ -1,8 +1,7 @@
 import copy
 from abc import abstractmethod
 from typing import Dict, Union, Type, List
-
-from scan_text_recipes.utils.utils import initialize_pipieline_segments
+from scan_text_recipes.utils.utils import initialize_pipeline_segments
 
 
 class LoopContainer:
@@ -13,22 +12,32 @@ class LoopContainer:
     processing the recipe in each iteration.
     """
     def __init__(self, iterations: int, package_path: str, segment_config: List[Dict], class_type: Type, **kwargs):
-        self.processors = initialize_pipieline_segments(
+        self.processors = initialize_pipeline_segments(
             package_path=package_path,
             segment_config=segment_config,
             class_type=class_type,
             **kwargs
         )
         self._iterations = iterations
+        self.recipe = None
+        self._logger = kwargs.get("logger")
 
     @abstractmethod
-    def process_recipe(self, *args, **kwargs) -> Union[str, Dict[str, List]]:
+    def _run_loop(self, *args, **kwargs) -> [bool, Union[str, Dict[str, List]]]:
         raise NotImplementedError("Subclasses should implement this method.")
 
-    def run_loop(self, recipe: Union[str, Dict]) -> [bool, Union[str, Dict]]:
-        tmp_recipe = copy.deepcopy(recipe)
+    @abstractmethod
+    def _copy_tmp_recipe(self, **kwargs) -> Union[str, Dict]:
+        ...
+
+    def process_recipe(self, **kwargs) -> [bool, Union[str, Dict]]:
+        self.recipe = self._copy_tmp_recipe(**kwargs)
+        res = True
         for i in range(self._iterations):
-            res_bool, tmp_recipe = self.process_recipe(tmp_recipe)
-            if res_bool:
+            self._logger.info(f"Running iteration {i + 1} of {self._iterations}:")
+            res, self.recipe = self._run_loop(self.recipe, **kwargs)
+            if res:
+                self._logger.log(f"Expected result achieved. Stopping the iterations")
                 break
-        return tmp_recipe
+        self._logger.log(f"Finished processing the recipe after {self._iterations} iterations.")
+        return res, self.recipe
