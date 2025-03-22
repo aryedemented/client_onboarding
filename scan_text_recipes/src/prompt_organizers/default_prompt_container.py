@@ -2,20 +2,19 @@ from scan_text_recipes.src.prompt_organizers.base_prompts_container import BaseP
 
 
 class DefaultPromptsContainer(BasePromptsContainer):
-    @staticmethod
-    def system_prompt() -> str:
-        return """
-            You are a helpful assistant that extracts and structures recipes into a JSON format.
+    def system_prompt(self) -> str:
+        return f"""
+            You are a helpful assistant that extracts and structures recipes in {self.language} into a JSON format.
         """
 
     def force_ingredients_prompt(self) -> str:
         return f"""
-            - Allowed ingredient are: [{self.config['ALLOWED_INGREDIENTS']}].
+            - Allowed ingredient are: {self.setup_config['ALLOWED_INGREDIENTS']}.
         """ if self.force_ingredients else ""
 
     def force_resources_prompt(self) -> str:
         return f"""
-            - Allowed resources are: [{self.config['ALLOWED_RESOURCES']}].
+            - Allowed resources are: {self.setup_config['ALLOWED_RESOURCES']}.
         """ if self.force_resources else ""
 
     def user_recipe_prompt(self, recipe_text: str, **kwargs) -> str:
@@ -36,9 +35,11 @@ class DefaultPromptsContainer(BasePromptsContainer):
     - Represent resources also as nodes with preparation time and temperature (if applicable) as properties
     - Represent resource preparation time as properties of resource nodes. 
     - Combining / adding ingredients into resources will be represented as edges
-    - Edges will have instructions explaining the process, that will be derived form the recipe and added as properties of the edges 
-    - Every Ingredient should be connected to the resource it is used in, and every resource should be connected to all ingredients used in it.
-    - There should be no ingredient-to-ingredient or resource-to resource connections, all connections are either resource-to-ingredient or ingredient-to-resource.
+    - Edges will have instructions explaining the process, that will be derived form the recipe and added as properties of the edges.
+    - Every Ingredient should be connected to the resource it is used in.
+    - Every Resource should be connected to all ingredients used in it, and have at least one outgoing edge connection to ingredient node.
+    - There should be no ingredient-to-ingredient or resource-to resource edges connections, all edges connections are either resource-to-ingredient or ingredient-to-resource.
+    - Field names should be in english, but the values should be in the original language of the recipe.
     Now extract this JSON for the given recipe: 
     """
 

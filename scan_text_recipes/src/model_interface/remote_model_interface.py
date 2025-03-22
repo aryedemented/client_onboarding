@@ -7,14 +7,20 @@ import json
 
 from openai.types.chat import ChatCompletion
 from scan_text_recipes import PROJECT_ROOT
+from scan_text_recipes.src import LOGGER_PACKAGE_PATH
 from scan_text_recipes.src.prompt_organizers.default_prompt_container import DefaultPromptsContainer
 from scan_text_recipes.tests.examples_for_tests import load_unstructured_text_test_recipe, load_test_setup_config
-from scan_text_recipes.utils.utils import read_api_key, clean_json_output, write_yaml, read_model_config
+from scan_text_recipes.utils.logger.basic_logger import BaseLogger
+from scan_text_recipes.utils.utils import read_api_key, clean_json_output, write_yaml, read_model_config, \
+    load_or_create_instance
 
 
 class ModelInterface:
-    def __init__(self, config: Dict = None):
+    def __init__(self, config: Dict = None, logger=None, **kwargs):
         self.model_config: Dict = config if config else read_model_config()
+        self.logger = load_or_create_instance(
+            logger, BaseLogger, LOGGER_PACKAGE_PATH, **{**{"name": self.__class__.__name__}, **kwargs}
+        )
 
     @abstractmethod
     def get_structured_answer(self, messages: List[Dict]) -> Dict:
@@ -37,14 +43,15 @@ class ModelInterface:
 
 
 class RemoteAPIModelInterface(ModelInterface):
-    def __init__(self, config: Dict = None):
-        super().__init__(config if config else read_model_config())
+    def __init__(self, config: Dict = None, **kwargs):
+        super().__init__(config if config else read_model_config(), **kwargs)
         self.client = openai.OpenAI(
             api_key=read_api_key(self.model_config['API_KEY_NAME']),
             base_url=self.model_config['BASE_URL']
         )
 
     def get_response(self, messages: List[Dict]) -> ChatCompletion:
+        self.logger.info("Sending request to the model...")
         return self.client.chat.completions.create(
             model=self.model_config["MODEL_NAME"],
             messages=messages,
@@ -59,17 +66,22 @@ class RemoteAPIModelInterface(ModelInterface):
         # Extract response
         try:
             formatted_recipe = clean_json_output(response.choices[0].message.content)
-            return True, json.loads(formatted_recipe)
+            response = json.loads(formatted_recipe)
+            self.logger.info("Recipe processed successfully")
+            return True, response
         except json.JSONDecodeError:
-            print("Invalid JSON response:", json.JSONDecodeError)
+            self.logger.error(f"Invalid JSON response: {json.JSONDecodeError}")
             return False, {}
 
     def get_text_answer(self, messages: List[Dict]) -> [bool, str]:
         try:
             response = self.get_response(messages)
-            return True, response.choices[0].message.content
+            content = response.choices[0].message.content
+            self.logger.info("Received valid reply")
+            return True, content
         except Exception as e:
-            print("Error occurred in response:", e)
+            self.logger.error(f"Error occurred in response: {e}")
+            print()
             return False, ""
 
 

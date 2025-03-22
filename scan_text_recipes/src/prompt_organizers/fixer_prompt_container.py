@@ -16,8 +16,7 @@ class DefaultRefinerPromptsContainer(DefaultPromptsContainer):
         """
         return refinement_prompt
 
-    @staticmethod
-    def assistant_prompt(**kwargs) -> str:
+    def assistant_prompt(self, **kwargs) -> str:
         """
         Create a prompt for the assistant.
         :return: Prompt for the assistant.
@@ -27,4 +26,6 @@ class DefaultRefinerPromptsContainer(DefaultPromptsContainer):
             - Address fields encapsulated in "$$$" and fix the values according to instructions.
             - Preserve the existing structure.
             - If value not found, leave the field empty.
-            - **Respond only with the updated JSON**."""
+            - **Respond only with the updated JSON**.
+            - Field names should be in english, but the values should be in the original language of the recipe.
+            """

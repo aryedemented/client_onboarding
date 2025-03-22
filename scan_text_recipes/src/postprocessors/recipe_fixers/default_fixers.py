@@ -4,6 +4,7 @@ from typing import Dict, List
 
 import dictdiffer
 
+from scan_text_recipes.src import RECIPE_FIXERS_PACKAGE_PATH, MODEL_INTERFACE_PACKAGE_PATH, PROMPTS_PACKAGE_PATH
 from scan_text_recipes.src.model_interface.remote_model_interface import ModelInterface, RemoteAPIModelInterface
 from scan_text_recipes.src.postprocessors.post_processors import PostProcessor
 from scan_text_recipes.src.prompt_organizers.base_prompts_container import BasePromptsContainer
@@ -13,37 +14,37 @@ from scan_text_recipes.src.unit_converters.units_extractor import UnitsHandler
 from scan_text_recipes.tests.examples_for_tests import load_unstructured_text_test_recipe, load_structured_test_recipe, \
     load_test_architecture_config, load_test_setup_config
 from scan_text_recipes.utils.file_utils import dynamic_import_from_packages
-from scan_text_recipes.utils.utils import list_it, read_model_config
+from scan_text_recipes.utils.utils import list_it, read_model_config, load_or_create_instance
 
 
 class RemoveFakes(PostProcessor):
-    def process_recipe(self, recipe_dict: Dict[str, List], recipe_text: str, **kwargs) -> Dict[str, List]:
+    def process_recipe(self, recipe_dict: Dict[str, List], recipe_text: str, **kwargs) -> [bool, Dict[str, List]]:
         recipe_dict_fixed = copy.deepcopy(recipe_dict)
         # remove fake keys (ingredients or rosources) from the recipe
         for key in recipe_dict[self.section_name]:
             if key.get("name") not in recipe_text:
                 recipe_dict_fixed[self.section_name].remove(key)
-            # remove edges of fake ingredients from the recipe
-            for edge in recipe_dict["edges"]:
-                if edge.get("from") == key.get("name") or edge.get("to") == key.get("name"):
-                    recipe_dict_fixed["edges"].remove(edge)
-        return recipe_dict_fixed
+                # remove edges of fake ingredients from the recipe
+                for edge in recipe_dict["edges"]:
+                    if edge.get("from") == key.get("name") or edge.get("to") == key.get("name"):
+                        recipe_dict_fixed["edges"].remove(edge)
+        return True, recipe_dict_fixed
 
 
 class RemoveFakeIngredients(RemoveFakes):
     """
     Remove fake ingredients from the recipe.
     """
-    def __init__(self, config: Dict, **kwargs):
-        super().__init__(config, "ingredients", **kwargs)
+    def __init__(self, setup_config: Dict, **kwargs):
+        super().__init__(setup_config, "ingredients", **kwargs)
 
 
 class RemoveFakeResources(RemoveFakes):
     """
     Remove fake resources from the recipe.
     """
-    def __init__(self, config: Dict, **kwargs):
-        super().__init__(config, "resources", **kwargs)
+    def __init__(self, setup_config: Dict, **kwargs):
+        super().__init__(setup_config, "resources", **kwargs)
 
 
 class RecipeFixer(PostProcessor):
@@ -53,16 +54,21 @@ class RecipeFixer(PostProcessor):
     def __init__(self, config: Dict, section_name: str, model_interface: ModelInterface,  language: str,
                  refiner_prompts: BasePromptsContainer = None, setup_config: Dict = None, **kwargs):
         super().__init__(config, section_name, **kwargs)
-        self.model_interface = model_interface
-        self.prompts = refiner_prompts if refiner_prompts else DefaultRefinerPromptsContainer(setup_config, language=language)
+
+        self.model_interface = load_or_create_instance(
+            model_interface, ModelInterface, MODEL_INTERFACE_PACKAGE_PATH, **kwargs
+        )
+        refiner_prompts = DefaultRefinerPromptsContainer(setup_config, language=language) if refiner_prompts is None else refiner_prompts
+        self.prompts = load_or_create_instance(
+            refiner_prompts, BasePromptsContainer, PROMPTS_PACKAGE_PATH, **kwargs
+        )
         self.units_interpreter = UnitsHandler()
 
         # load all validation methods
         self.validation_methods = dynamic_import_from_packages(
-            ["scan_text_recipes.src.postprocessors.recipe_fixers"],
+            [RECIPE_FIXERS_PACKAGE_PATH],
             lambda x: issubclass(x, ValidationMethod) and not isabstract(x)
         )
-        self.units_system = self.config.UNITS_SYSTEM if hasattr(self.config, "UNITS_SYSTEM") else "MKS"
 
     def create_questions_user_prompt(self, recipe_dict: Dict[str, List], recipe_text: str) -> str:
         section = copy.deepcopy(recipe_dict[self.section_name])
@@ -81,13 +87,14 @@ class RecipeFixer(PostProcessor):
                         if not getattr(self.validation_methods[method], 'validate')(value):
                             section[sec_idx][field_name] = f"$$${getattr(self.validation_methods[method], 'refinement_instructions')()}$$$"
 
+
         return self.prompts.user_recipe_prompt(
             section_name=self.section_name,
             section=section,
             recipe_text=recipe_text,
         )
 
-    def process_recipe(self, recipe_dict: Dict[str, List], recipe_text: str) -> Dict[str, List]:
+    def process_recipe(self, recipe_dict: Dict[str, List], recipe_text: str, **kwargs) -> [bool, Dict[str, List]]:
         """
         Refine the recipe.
         :param recipe_dict: Structured recipe.
@@ -102,7 +109,7 @@ class RecipeFixer(PostProcessor):
         res, refined_section = self.model_interface.get_structured_answer(messages=messages)
         refined_recipe = copy.deepcopy(recipe_dict)
         refined_recipe[self.section_name] = refined_section
-        return refined_recipe
+        return res, refined_recipe
 
 
 class IngredientRecipeFixer(RecipeFixer):

@@ -82,7 +82,7 @@ def read_schema_config() -> Dict:
     return final_schema
 
 
-def read_jinja_config(config_file: str, template_file: str):
+def read_jinja_config(config_file: str, template_file: str) -> Dict:
     with open(config_file) as f_config:
         config_data = f_config.read()  # ✅ Ignores comments
     with open(template_file, encoding='utf-8') as f_template:
@@ -132,7 +132,7 @@ def list_it(data: Any) -> List:
     return data
 
 
-def initialize_pipieline_segments(package_path: str, segment_config: List, class_type: Type[Any], **kwargs) -> List:
+def initialize_pipeline_segments(package_path: str, segment_config: List, class_type: Type[Any], **kwargs) -> List:
     processor_classes = dynamic_import_from_packages(
         [package_path],
         lambda x: issubclass(x, class_type) and not isabstract(x)
@@ -145,3 +145,19 @@ def initialize_pipieline_segments(package_path: str, segment_config: List, class
             props = {}
         processors.append(processor_classes[name](**{**props, **kwargs}))  # Priority to props, i.e. to specific class properties
     return processors
+
+
+def load_or_create_instance(input_, class_: Type, package_path: str, **kwargs):
+    if isinstance(input_, class_) or input_ is None or len(input_) == 0:
+        return input_
+    if isinstance(input_, str):
+        input_config = list_it({input_: {}})
+    else:
+        input_config = list_it(input_)
+    instance = initialize_pipeline_segments(
+        package_path=package_path,
+        segment_config=input_config,
+        class_type=class_,
+        **kwargs
+    )[0]
+    return instance
