@@ -21,6 +21,8 @@ PROCESSING_PIPELINE:
           force_ingredients: {{ force_ingredients | default(False) }}
           force_resources: {{ force_resources | default(False) }}
   POST_PROCESSORS:
+    - GraphRefinement:
+        model_interface: {{ model_interface_class }}
     - PostProcessorsLoopContainer:
         iterations: 1
         language: {{ language }}
@@ -46,16 +48,4 @@ PROCESSING_PIPELINE:
             - occupancy:
                 - NotNull
                 - TypeFloat
-#    - ActionsRecipeFixer:
-#        model_interface: {{ model_interface_class }}
-#        config:
-#          FIELDS:
-#            - from_type:
-#            - to_type:
-#            - from_id:
-#              - NotNull
-#              - TypeInt
-#            - to_id:
-#              - NotNull
-#              - TypeInt
     - UnitsTransformer:

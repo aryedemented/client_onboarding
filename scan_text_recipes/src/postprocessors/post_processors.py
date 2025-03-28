@@ -10,8 +10,7 @@ from scan_text_recipes.utils.utils import load_or_create_instance
 
 class PostProcessor:
     def __init__(
-            self,
-            config: Dict = None, section_name: str = None, logger=None, **kwargs
+            self, config: Dict = None, section_name: str = None, logger=None, **kwargs
     ):
         super().__init__()
         self.config = config
