@@ -1,6 +1,7 @@
 language: {{ language }}
 logger: {{ logger }}
 setup_config: {{ setup_config }}
+units:  {{ units }}
 DATABASE_INTERFACE:
   {{db_interface_class}}:
     db_config: {{ db_config }}
@@ -57,3 +58,4 @@ PROCESSING_PIPELINE:
 #            - to_id:
 #              - NotNull
 #              - TypeInt
+    - UnitsTransformer:

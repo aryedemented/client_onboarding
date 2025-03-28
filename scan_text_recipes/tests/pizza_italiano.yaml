@@ -1,0 +1,142 @@
+edges:
+- from: קמח
+  instructions: מעורבב עם שמרים יבשים וסוכר
+  to: בצק
+- from: שמרים יבשים
+  instructions: מעורבב עם קמח וסוכר
+  to: בצק
+- from: סוכר
+  instructions: מעורבב עם קמח ושמרים יבשים
+  to: בצק
+- from: מלח
+  instructions: מוסף לקערה עם מים ושמן זית
+  to: בצק
+- from: שמן זית
+  instructions: מוסף לקערה עם מלח ומים
+  to: בצק
+- from: מים פושרים
+  instructions: מוספים לקערה עם מלח ושמן זית
+  to: בצק
+- from: בצק
+  instructions: מתפח בקערה מכוסה בניילון נצמד למשך חצי שעה
+  to: קערה
+- from: בצק
+  instructions: נפרס ונלוש שנית, מרודד לצורה עגולה
+  to: משטח עבודה
+- from: בצק
+  instructions: מועבר לתבנית ויוצרים מסגרת מסביב
+  to: תבנית
+- from: עגבניות
+  instructions: מבושלות עם שום במחבת
+  to: רוטב עגבניות
+- from: שום
+  instructions: מבושל עם עגבניות במחבת
+  to: רוטב עגבניות
+- from: בזיליקום טרי
+  instructions: מוסף למחבת עם עגבניות ושום
+  to: רוטב עגבניות
+- from: רסק עגבניות
+  instructions: מוסף למחבת עם תבלינים
+  to: רוטב עגבניות
+- from: אורגנו יבש
+  instructions: מוסף למחבת עם תבלינים
+  to: רוטב עגבניות
+- from: רוטב עגבניות
+  instructions: נמרח על בסיס הבצק
+  to: תבנית
+- from: גבינה קשה מגוררת
+  instructions: מפוזרת על הרוטב
+  to: תבנית
+- from: תוספות
+  instructions: מפוזרות על הרוטב והגבינה
+  to: תבנית
+- from: תבנית
+  instructions: נאפה בחום של 200 מעלות עד להשחמה
+  to: תנור
+ingredients:
+- name: קמח
+  quantity: .nan
+  remarks: ''
+  units: g
+- name: שמרים יבשים
+  quantity: .nan
+  remarks: ''
+  units: g
+- name: סוכר
+  quantity: .nan
+  remarks: ''
+  units: g
+- name: מלח
+  quantity: .nan
+  remarks: ''
+  units: g
+- name: שמן זית
+  quantity: .nan
+  remarks: ''
+  units: ml
+- name: מים פושרים
+  quantity: .nan
+  remarks: ''
+  units: ml
+- name: עגבניות
+  quantity: .nan
+  remarks: ''
+  units: g
+- name: שום
+  quantity: .nan
+  remarks: ''
+  units: g
+- name: בזיליקום טרי
+  quantity: .nan
+  remarks: ''
+  units: g
+- name: רסק עגבניות
+  quantity: .nan
+  remarks: ''
+  units: g
+- name: אורגנו יבש
+  quantity: .nan
+  remarks: ''
+  units: g
+- name: גבינה קשה מגוררת
+  quantity: .nan
+  remarks: ''
+  units: g
+- name: תוספות
+  quantity: .nan
+  remarks: פטריות, זיתים, גבינה מלוחה וכו'
+  units: g
+- name: בצק
+  quantity: 1
+  remarks: נוצר מערבוב קמח, שמרים יבשים, סוכר, מלח, שמן זית ומים פושרים
+  units: ''
+- name: רוטב עגבניות
+  quantity: .nan
+  remarks: נוצר מבישול עגבניות, שום, בזיליקום, תבלינים ורסק עגבניות
+  units: g
+resources:
+- name: קערה
+  occupancy: ''
+  preparation_time: ''
+  remarks: לערבוב ולישת הבצק
+  temperature: ''
+- name: משטח עבודה
+  occupancy: ''
+  preparation_time: ''
+  remarks: לרידוד הבצק
+  temperature: ''
+- name: תבנית
+  occupancy: ''
+  preparation_time: ''
+  remarks: לאפיית הפיצה
+  temperature: ''
+- name: מחבת
+  occupancy: ''
+  preparation_time: ''
+  remarks: להכנת רוטב העגבניות
+  temperature: ''
+- name: תנור
+  occupancy: ''
+  preparation_time: 15 דקות
+  remarks: לאפיית הפיצה בחום של 200 מעלות
+  temperature: '200'

@@ -9,7 +9,7 @@ class DefaultPromptsContainer(BasePromptsContainer):
 
     def force_ingredients_prompt(self) -> str:
         return f"""
-            - Allowed ingredient are: {self.setup_config['ALLOWED_INGREDIENTS']}.
+            - Allowed ingredient are: {list(self.setup_config['ALLOWED_INGREDIENTS'].keys())}.
         """ if self.force_ingredients else ""
 
     def force_resources_prompt(self) -> str:

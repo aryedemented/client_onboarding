@@ -3,14 +3,15 @@ from typing import Dict
 
 from scan_text_recipes import PROJECT_ROOT
 from scan_text_recipes.src import PRE_PROCESSORS_PACKAGE_PATH, MAIN_PROCESSORS_PACKAGE_PATH, \
-    POST_PROCESSORS_PACKAGE_PATH, DB_PACKAGE_PATH
+    POST_PROCESSORS_PACKAGE_PATH, DB_PACKAGE_PATH, LOGGER_PACKAGE_PATH
 from scan_text_recipes.src.db_interface.db_interface import BaseDatabaseInterface
 from scan_text_recipes.src.main_processors.recipe_formatter import BaseMainProcessor
 from scan_text_recipes.src.postprocessors.recipe_fixers.default_fixers import PostProcessor
 from scan_text_recipes.src.preprocessors.preprocessors import PreProcessor
+from scan_text_recipes.utils.logger.basic_logger import BaseLogger
 # from scan_text_recipes.tests.examples_for_tests import load_unstructured_text_test_recipe, load_structured_test_recipe
 from scan_text_recipes.utils.utils import read_jinja_config, read_yaml, initialize_pipeline_segments, read_text, \
-    load_or_create_instance
+    load_or_create_instance, write_yaml
 from scan_text_recipes.utils.visualize_recipe import create_recipe_graph
 
 
@@ -22,6 +23,7 @@ class ReadRecipePipeline:
             db_connection_config_path: str,  # database connection configuration file
             pipeline_config_path: str = None,  # processing pipeline config, lists of available post, pre and main processors
             model_config_path: str = None,  # LLM properties configuration file
+            logger: BaseLogger = None
     ):
         # read jinja config
         pipeline_config_path = pipeline_config_path if pipeline_config_path else os.path.join(PROJECT_ROOT, "config", "pipeline_config.yaml")
@@ -32,6 +34,12 @@ class ReadRecipePipeline:
         pipeline_segments = self.pipeline_props.pop('PROCESSING_PIPELINE')
         db_interface_config = self.pipeline_props.pop('DATABASE_INTERFACE')
 
+        # Init Logger
+        if 'logger' in self.pipeline_props:
+            self.pipeline_props['logger'] = logger if logger else self.pipeline_props['logger']
+            self.logger = load_or_create_instance(
+                self.pipeline_props['logger'], BaseLogger, LOGGER_PACKAGE_PATH, name=self.__class__.__name__,
+            )
         # Init Model Interface
         self.model_config = read_yaml(model_config_path)
         self.model_api_keys = read_yaml(model_api_keys_path)
@@ -85,10 +93,12 @@ class ReadRecipePipeline:
 
         # Run all postprocessors
         for post_processor in self.post_processors:
+            self.logger.warning(f'Running: {post_processor.__class__.__name__}')
             res, recipe_dict = post_processor.process_recipe(recipe_dict=recipe_dict, recipe_text=original_text)
             if not res:
                 return False, recipe_dict
         # Save processed recipe to database
+
         return res, recipe_dict
 
     def save_recipe_to_db(self, recipe_dict: Dict, recipe_text: str):
@@ -114,12 +124,13 @@ if __name__ == '__main__':
         model_api_keys,
         db_connection_config
     )
-    # loaded_recipe_text = read_text(os.path.join(PROJECT_ROOT, "..", "recipes", client_name, "pizza_italiano.txt"))
-    loaded_recipe_text = read_text(os.path.join(PROJECT_ROOT, "..", "recipes", client_name, "hamin.txt"))
+    loaded_recipe_text = read_text(os.path.join(PROJECT_ROOT, "..", "recipes", client_name, "pizza_italiano.txt"))
+    # loaded_recipe_text = read_text(os.path.join(PROJECT_ROOT, "..", "recipes", client_name, "hamin.txt"))
     # Run the pipeline on the recipe text
     _, processed_recipe = pipeline.run_pipeline(loaded_recipe_text)
     # Save the processed recipe to the database
     pipeline.save_recipe_to_db(processed_recipe, loaded_recipe_text)
+    write_yaml(processed_recipe, os.path.join(PROJECT_ROOT, "..", "structured_recipes", f"{'pizza_italiano'}.yaml"), encoding='utf-8')
     print(processed_recipe)
     graph = create_recipe_graph(processed_recipe)
     graph.render(os.path.join(PROJECT_ROOT, "..", "structured_recipes", "tmp"), view=True)  # Saves and opens the graph

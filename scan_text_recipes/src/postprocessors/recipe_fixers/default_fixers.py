@@ -85,8 +85,9 @@ class RecipeFixer(PostProcessor):
                             continue
                         value = self.units_interpreter.get_magnitude(section_field[field_name])
                         if not getattr(self.validation_methods[method], 'validate')(value):
-                            section[sec_idx][field_name] = f"$$${getattr(self.validation_methods[method], 'refinement_instructions')()}$$$"
-
+                            instruction = getattr(self.validation_methods[method], 'refinement_instructions')(field_name, section_field['name'])
+                            self.logger.warning(f'Adding refinement instruction: "{instruction}"')
+                            section[sec_idx][field_name] = f"$$${instruction}$$$"
 
         return self.prompts.user_recipe_prompt(
             section_name=self.section_name,

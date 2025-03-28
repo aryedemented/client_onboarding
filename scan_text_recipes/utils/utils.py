@@ -16,14 +16,14 @@ from scan_text_recipes.utils.file_utils import dynamic_import_from_packages
 
 
 def read_yaml(filename: str, **kwargs) -> Dict:
-    with open(filename, 'r', **kwargs) as file:
+    with open(filename, 'r', encoding="utf-8", **kwargs) as file:
         data = yaml.safe_load(file)
     return data
 
 
-def write_yaml(data_dict, filename: str):
-    with open(filename, 'w') as file:
-        yaml.dump(data_dict, file, default_flow_style=False)
+def write_yaml(data_dict, filename: str, **kwargs):
+    with open(filename, 'w', **kwargs) as file:
+        yaml.dump(data_dict, file, default_flow_style=False, allow_unicode=True)
 
 
 def read_api_key(key_name) -> str:
@@ -83,7 +83,7 @@ def read_schema_config() -> Dict:
 
 
 def read_jinja_config(config_file: str, template_file: str) -> Dict:
-    with open(config_file) as f_config:
+    with open(config_file, encoding='utf-8') as f_config:
         config_data = f_config.read()  # ✅ Ignores comments
     with open(template_file, encoding='utf-8') as f_template:
         yaml_template = f_template.read()

@@ -23,8 +23,8 @@ class NotNull(ValidationMethod):
             return False
 
     @staticmethod
-    def refinement_instructions(*args, **kwargs) -> str:
-        return f"This value should not be null."
+    def refinement_instructions(prop, field_name, **kwargs) -> str:
+        return f"The {prop} of {field_name} should not be null."
 
 
 class TypeFloat(ValidationMethod):
@@ -36,8 +36,8 @@ class TypeFloat(ValidationMethod):
             return False
 
     @staticmethod
-    def refinement_instructions(*args, **kwargs) -> str:
-        return f"This value should be numeric."
+    def refinement_instructions(prop, field_name, **kwargs) -> str:
+        return f"The {prop} of {field_name} should be numeric."
 
 
 class TypeInt(ValidationMethod):
@@ -49,8 +49,8 @@ class TypeInt(ValidationMethod):
             return False
 
     @staticmethod
-    def refinement_instructions(*args, **kwargs) -> str:
-        return f"This value be integer."
+    def refinement_instructions(prop, field_name, **kwargs) -> str:
+        return f"The {prop} of {field_name} should be integer."
 
 
 class Positive(ValidationMethod):
@@ -62,5 +62,5 @@ class Positive(ValidationMethod):
             return False
 
     @staticmethod
-    def refinement_instructions(*args, **kwargs) -> str:
-        return f"This value should be positive."
+    def refinement_instructions(prop, field_name, **kwargs) -> str:
+        return f"The {prop} of {field_name} should be postive."

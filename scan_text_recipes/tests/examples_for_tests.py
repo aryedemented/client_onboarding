@@ -24,10 +24,10 @@ def load_structured_test_recipe():
     :return: Structured recipe as a dictionary.
     """
     # Define the path to the YAML file
-    yaml_file_path = os.path.join(PROJECT_ROOT, "tests", "classic_pancakes.yaml")
+    yaml_file_path = os.path.join(PROJECT_ROOT, "tests", "pizza_italiano.yaml")
 
     # Load the YAML file
-    return read_yaml(yaml_file_path)
+    return read_yaml(yaml_file_path, encoding='utf-8')
 
 
 def load_complex_text_test_recipe() -> str:
@@ -52,4 +52,4 @@ def load_test_setup_config() -> Dict:
     yaml_file_path = os.path.join(PROJECT_ROOT, "tests", "test_setup_config.yaml")
 
     # Load the YAML file
-    return read_yaml(yaml_file_path)
+    return read_yaml(yaml_file_path, encoding='utf-8')

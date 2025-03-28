@@ -13,6 +13,7 @@ class PostProcessor:
             self,
             config: Dict = None, section_name: str = None, logger=None, **kwargs
     ):
+        super().__init__()
         self.config = config
         self.section_name = section_name
         self.logger = load_or_create_instance(
@@ -53,8 +54,10 @@ class PostProcessorsLoopContainer(LoopContainer, PostProcessor):
         recipe_dict: str = kwargs.get("recipe_dict")
         recipe_text = kwargs.get("recipe_text")
         for processor in self.processors:
+            self.logger.info(f"Running {processor.__class__.__name__} post-processor")
             res, recipe_dict = processor.process_recipe(recipe_dict=recipe_dict, recipe_text=recipe_text)
             if not res:
-                self.logger.log(f"Error in {processor.__class__.__name__}")
+                self.logger.error(f"Error in {processor.__class__.__name__}")
                 return False, recipe_dict
+        self.logger.info(f"Finished post-processing the recipe")
         return True, recipe_dict

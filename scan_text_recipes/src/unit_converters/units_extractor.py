@@ -1,13 +1,15 @@
 import re
 from typing import Union
 
+import numpy as np
 import pint.errors
 from pint import UnitRegistry
 from word2number import w2n
 
 
 class UnitsHandler:
-    def __init__(self):
+    def __init__(self, **kwargs):
+        super().__init__()
         self.ureg = UnitRegistry()
 
     def get_magnitude(self, text):
@@ -44,7 +46,16 @@ class UnitsHandler:
             pass
 
     def to(self, value: Union[str, int, float], to_unit: str) -> float:
-        return self.ureg(str(value)).to(to_unit).magnitude
+        try:
+            return self.ureg(str(value)).to(to_unit).magnitude
+        except:
+            pass
+        try:
+            val = float(value)
+            return val
+        except ValueError:
+            pass
+        return np.nan
 
 
 if __name__ == '__main__':
