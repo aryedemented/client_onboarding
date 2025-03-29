@@ -11,7 +11,7 @@ from scan_text_recipes.src.preprocessors.preprocessors import PreProcessor
 from scan_text_recipes.utils.logger.basic_logger import BaseLogger
 # from scan_text_recipes.tests.examples_for_tests import load_unstructured_text_test_recipe, load_structured_test_recipe
 from scan_text_recipes.utils.utils import read_jinja_config, read_yaml, initialize_pipeline_segments, read_text, \
-    load_or_create_instance, write_yaml
+    load_or_create_instance
 from scan_text_recipes.utils.visualize_recipe import create_recipe_graph
 
 
@@ -79,19 +79,21 @@ class ReadRecipePipeline:
         Run the pipeline on the given recipe dictionary and text.
         """
         # Run all preprocessor
-        res = True
         original_text = recipe_text
+        self.logger.info(f'Running Pre-Processors on textual data:')
         for pre_processor in self.pre_processors:
             res, recipe_text = pre_processor.process_recipe(recipe_text)
             if not res:
                 return False, {}
         # Run the main processor
+        self.logger.info(f'Running Main Processor (text to structured recipe):')
         res, recipe_dict = self.main_processor.process_recipe(recipe_text)
         if not res:
             return False, recipe_dict
         # recipe_dict = load_structured_test_recipe()
 
         # Run all postprocessors
+        self.logger.info(f'Running Post-Processors on structured recipe:')
         for post_processor in self.post_processors:
             self.logger.warning(f'Running: {post_processor.__class__.__name__}')
             res, recipe_dict = post_processor.process_recipe(recipe_dict=recipe_dict, recipe_text=original_text)
@@ -124,13 +126,14 @@ if __name__ == '__main__':
         model_api_keys,
         db_connection_config
     )
+
     loaded_recipe_text = read_text(os.path.join(PROJECT_ROOT, "..", "recipes", client_name, "pizza_italiano.txt"))
     # loaded_recipe_text = read_text(os.path.join(PROJECT_ROOT, "..", "recipes", client_name, "hamin.txt"))
     # Run the pipeline on the recipe text
     _, processed_recipe = pipeline.run_pipeline(loaded_recipe_text)
     # Save the processed recipe to the database
     pipeline.save_recipe_to_db(processed_recipe, loaded_recipe_text)
-    write_yaml(processed_recipe, os.path.join(PROJECT_ROOT, "..", "structured_recipes", f"{'pizza_italiano'}.yaml"), encoding='utf-8')
+    # write_yaml(processed_recipe, os.path.join(PROJECT_ROOT, "..", "structured_recipes", f"{'pizza_italiano'}.yaml"), encoding='utf-8')
     print(processed_recipe)
     graph = create_recipe_graph(processed_recipe)
     graph.render(os.path.join(PROJECT_ROOT, "..", "structured_recipes", "tmp"), view=True)  # Saves and opens the graph

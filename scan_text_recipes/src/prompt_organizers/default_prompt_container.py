@@ -35,6 +35,7 @@ class DefaultPromptsContainer(BasePromptsContainer):
     - Represent resources also as nodes with preparation time and temperature (if applicable) as properties
     - Represent resource preparation time as properties of resource nodes. 
     - Combining / adding ingredients into resources will be represented as edges
+    - Final Node should have name {self.setup_config['FINAL_NODE_NAME']}.
     - Edges will have instructions explaining the process, that will be derived form the recipe and added as properties of the edges.
     - Every Ingredient should be connected to the resource it is used in.
     - Every Resource should be connected to all ingredients used in it, and have at least one outgoing edge connection to ingredient node.

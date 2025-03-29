@@ -2,22 +2,26 @@ import os
 from typing import Dict, List
 
 import networkx as nx
-import numpy as np
 import pandas as pd
 from pyvis.network import Network
 import streamlit as st
 from streamlit.components.v1 import html
 import tempfile
 
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+
 from scan_text_recipes import PROJECT_ROOT
 from scan_text_recipes.src.run_pipeline import ReadRecipePipeline
-from scan_text_recipes.uploader_tool.src.st_utils import hebrew_text
+from scan_text_recipes.uploader_tool.src.recipe_scheduler_utils import build_schedule
+from scan_text_recipes.uploader_tool.src.st_utils import hebrew_text, reshape_hebrew
 from scan_text_recipes.utils.utils import read_jinja_config, read_yaml
 
 
 class VisToolUploader:
     def __init__(self):
         st.set_page_config(layout="wide")
+        self.load_data()
         col1, col2 = st.columns(2)
         with col1:
             col1_container = st.container()
@@ -30,6 +34,7 @@ class VisToolUploader:
             with col4:
                 self.force_resources = st.checkbox("Force Resources", value=False)
             st.text("Log:")
+            self.scheduler_area = st.empty()
             self.log_area = st.empty()
 
         with col2:
@@ -44,17 +49,22 @@ class VisToolUploader:
                 hebrew_text("פריסת מתכונים", h=1)
             uploaded_file = col2_container.file_uploader("מתכון חדש", type=["txt", "yaml"])
             if uploaded_file is not None:
-                print("File received!")  # Just a simple confirmation for now
                 col2_container.write("Upload succeeded")
-                self.upload_button_callback(uploaded_file)
+                print("File Uploaded!")
                 if col2_container.button("סרוק מתכון"):
-                    # col2_container.session_state.data['recipe_dict'] = self.parse_recipe()
-                    st.session_state.data['recipe_dict'] = read_yaml("D:\\Projects\\Kaufmann_and_Co\\recepies\\scan_code\\ScanRecepies\\structured_recipes\\pizza_italiano.yaml")
-                    st.session_state.data['graph'] = self.build_recipe_graph(st.session_state.data['recipe_dict'])
+                    self.upload_button_callback(uploaded_file)
+                    print("scanning recipe")
+                    if "data" not in st.session_state:
+                        st.session_state.data = {}
+                    st.session_state.data['recipe_dict'] = self.parse_recipe()
+                    # self.recipe_dict = read_yaml("D:\\Projects\\Kaufmann_and_Co\\recepies\\scan_code\\ScanRecepies\\structured_recipes\\pizza_italiano.yaml")
         with self.graph_area:
-            if "data" in st.session_state:
-                if "graph" in st.session_state.data:
-                    self.show_graph(st.session_state.data['graph'])
+            print("displaying graph")
+            graph = self.build_recipe_graph(self.recipe_dict)
+            self.show_graph(graph)
+        with self.scheduler_area:
+            scheduler_dict = build_schedule(self.recipe_dict)
+            self.plot_schedule(scheduler_dict)
 
         with col2:
             if "data" in st.session_state:
@@ -63,10 +73,12 @@ class VisToolUploader:
 
             if "data" in st.session_state and "recipe_dict" in st.session_state.data:
                 col5, col6 = col2_container.columns([1, 1])
+                print("Displaying Ingredients and Resources")
                 with col5:
                     list_of_ingredients = list(self.client_config['ALLOWED_INGREDIENTS'].keys())
                     print(st.session_state.data['recipe_dict']['ingredients'])
                     self.display_table(
+                        "ingredients_table",
                         st.session_state.data['recipe_dict']['ingredients'],
                         list_of_items=list_of_ingredients,
                         table_place_holder=col2_container
@@ -74,6 +86,7 @@ class VisToolUploader:
                 with col6:
                     list_of_resources = self.client_config['ALLOWED_RESOURCES']
                     self.display_table(
+                        "resources_table",
                         st.session_state.data['recipe_dict']['resources'],
                         list_of_items=list_of_resources,
                         table_place_holder=col2_container
@@ -114,6 +127,24 @@ class VisToolUploader:
     def client_name(self, value: str):
         st.session_state.client_name = value
 
+    def load_data(self):
+        if "data" in st.session_state:
+            if "cilent_config" in st.session_state.data:
+                print("client_config found")
+                self.client_config = st.session_state.data['client_config']
+            if "client_name" in st.session_state.data:
+                print("client_name found")
+                self.client_name = st.session_state.data['client_name']
+            if "bundle_config_path" in st.session_state.data:
+                print("bundle_config_path found")
+                self.bundle_config_path = st.session_state.data['bundle_config_path']
+            if "recipe_dict" in st.session_state.data:
+                print("recipe_dict found")
+                self.recipe_dict = st.session_state.data['recipe_dict']
+                print(self.recipe_dict)
+            else:
+                self.recipe_dict = {'ingredients': [], 'resources': [], 'edges': []}
+
     def parse_recipe(self):
         # Model config
         model_api_keys = os.path.join(PROJECT_ROOT, "config", "api_keys.yaml")
@@ -146,6 +177,59 @@ class VisToolUploader:
             "recipe_name": uploaded_file.name.split(".")[0],
         }
 
+    @property
+    def recipe_dict(self):
+        return st.session_state.data['recipe_dict'] if "data" in st.session_state and "recipe_dict" in st.session_state.data else {}
+
+    @recipe_dict.setter
+    def recipe_dict(self, value: Dict):
+        st.session_state.data['recipe_dict'] = value
+
+    @staticmethod
+    def plot_schedule(scheduler_dict: List[Dict]):
+        fig, ax = plt.subplots(figsize=(6, 0.8), dpi=800)
+        cmap = cm.get_cmap('Pastel1')
+
+        # Assign a unique color to each resource using the colormap
+        unique_resources = list({s["resource"] for s in scheduler_dict})
+        resource_indices = {res: idx for idx, res in enumerate(unique_resources)}
+        resource_color_map = {
+            res: cmap(i / max(len(unique_resources) - 1, 1))  # avoid division by zero
+            for i, res in enumerate(unique_resources)
+        }
+
+        # Plot each resource's occupancy strip
+        for entry in scheduler_dict:
+            y_pos = resource_indices[entry["resource"]]
+            color = resource_color_map[entry["resource"]]
+            ax.broken_barh(
+                [(entry["start"], entry["end"] - entry["start"])],
+                (y_pos - 0.4, 0.8),
+                facecolors=color
+            )
+            ax.text(
+                entry["start"] + 0.1,
+                y_pos,
+                reshape_hebrew(entry["resource"]),
+                va='center',
+                ha='left',
+                fontsize=5,
+                color='black'
+            )
+
+        # Clean aesthetics
+        for spine in ax.spines.values():
+            spine.set_visible(False)
+
+        ax.tick_params(axis='x', labelsize=5)
+        ax.set_yticklabels([])
+        ax.tick_params(axis='y', which='both', left=False, labelleft=False)
+        ax.set_xlabel("Time (min)", fontsize=3)
+        ax.set_title("Resource Occupancy Gantt Chart", fontsize=5)
+        ax.grid(False)
+
+        st.pyplot(fig, clear_figure=True)
+
     @staticmethod
     def build_recipe_graph(recipe_dict: Dict) -> nx.DiGraph:
         graph = nx.DiGraph()
@@ -173,7 +257,7 @@ class VisToolUploader:
 
     @staticmethod
     def show_graph(graph: nx.DiGraph):
-        net = Network(height='800px', width='100%', directed=True)
+        net = Network(height='700px', width='100%', directed=True)
         net.from_nx(graph)
         net.set_options("""
         {
@@ -183,7 +267,7 @@ class VisToolUploader:
               "direction": "RL",
               "sortMethod": "directed",
               "nodeSpacing": 50,
-              "levelSeparation": 300,
+              "levelSeparation": 200,
               "treeSpacing": 50,
               "margin": 0
             }
@@ -208,27 +292,38 @@ class VisToolUploader:
         html(html_data, height=800, scrolling=True)
 
     @staticmethod
-    def display_table(data: Dict[str, List], table_place_holder=None, list_of_items: List[str] = None):
+    def display_table(table_name: str, data: Dict[str, List], table_place_holder=None, list_of_items: List[str] = None):
+        list_of_items = list_of_items if list_of_items is not None else []
+        df = pd.DataFrame(data)
+
+        # Use data_editor for interactive edits
+        with table_place_holder:
+            with st.expander(f"Edit Table: {table_name}", expanded=False):
+                edited_df = st.data_editor(
+                    df,
+                    use_container_width=True,
+                    num_rows="dynamic",
+                    key=table_name
+                )
+
+        # Recompute highlights on the edited data
         def highlight_rows(row):
             styles = [''] * len(row)
             if 'name' in row and row['name'] not in list_of_items:
                 styles = ['background-color: red'] * len(row)
             elif 'quantity' in row and (row['quantity'] is None or pd.isna(row['quantity'])):
                 styles = ['background-color: lightsalmon'] * len(row)
+            elif 'preparation_time' in row and row['preparation_time'] is None:
+                styles = ['background-color: lightsalmon'] * len(row)
             elif 'units' in row and row['units'] is None:
                 styles = ['background-color: lightcoral'] * len(row)
             return styles
 
-        list_of_items = list_of_items if list_of_items is not None else []
-        df = pd.DataFrame(data)
-        styled_df = df.style.apply(highlight_rows, axis=1) if list_of_items else df
+        # Show the highlighted version as a styled table below (optional)
+        styled_df = edited_df.style.apply(highlight_rows, axis=1)
+        st.dataframe(styled_df, use_container_width=True)
 
-        if table_place_holder is None:
-            table_place_holder = st.empty()
-        else:
-            table_place_holder.empty()
-        table_place_holder.dataframe(styled_df, use_container_width=True)
-        return table_place_holder
+        return edited_df  # return edited DataFrame so you can save it externally
 
 
 def run_app():

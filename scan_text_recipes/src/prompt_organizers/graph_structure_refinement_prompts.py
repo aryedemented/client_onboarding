@@ -26,11 +26,13 @@ class GraphEdgesPromptsContainer(DefaultPromptsContainer):
         refinement_prompt = f"""
             "Here is a recipe and a recipe graph. The graph has some issues:
             
-            Please complete the missing values based on the original text.
+            Please address these issues: {problems} 
+            These are the required solutions: {solutions}
             Here is the graph: ***\n{recipe_dict}\n***.
             Here is the original text: ***\n{recipe_text}***\n.
-            Here are the issues: {problems}
-            Here are the solutions: {solutions}
+            
+            - **Respond only with the updated JSON** Do not add any explanations or remarks.
+            - Field names should be in english, but the values should be in the original language of the recipe.
         """
         return refinement_prompt
 
@@ -40,12 +42,11 @@ class GraphEdgesPromptsContainer(DefaultPromptsContainer):
         :return: Prompt for the assistant.
         """
         return f"""
-        Instructions:
+        Graph Structure:
             - Recipe Graphs provided in format where nodes can be of two kinds: ingredient or resources.
             - ingredient nodes represent the ingredients used in the recipe. The properties include the name, quantity, and remarks.
             - resource nodes represent the resources used in the recipe. The properties include the name, preparation time, and remarks.
             - edges describe the relationship between resources and ingredients.
-            - ** Preserve the existing structure. **
-            - **Respond only with the updated JSON**.
-            - Field names should be in english, but the values should be in the original language of the recipe.
+            - Graph is of a DAG structure, meaning that there are no cycles in the graph.
+            - Graph final node named {self.setup_config['FINAL_NODE_NAME']}.
             """

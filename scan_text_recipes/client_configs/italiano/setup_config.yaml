@@ -24,3 +24,5 @@ ALLOWED_INGREDIENTS:
   "תוספות": "g"
   "בצק פיצה": ""
   "רוטב עגבניות": "g"
+
+FINAL_NODE_NAME: "final_node"

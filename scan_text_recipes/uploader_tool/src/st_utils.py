@@ -1,4 +1,6 @@
+import arabic_reshaper
 import streamlit as st
+from bidi import get_display
 
 
 def hebrew_text(text: str, h: int = 4, color: str = "black", container=None):
@@ -22,3 +24,8 @@ def hebrew_text(text: str, h: int = 4, color: str = "black", container=None):
             f"<h{h} style='text-align: right; direction: rtl; color: {color};'>{text}</h{h}>",
             unsafe_allow_html=True
         )
+
+
+def reshape_hebrew(text):
+    reshaped = arabic_reshaper.reshape(text)
+    return get_display(reshaped)
