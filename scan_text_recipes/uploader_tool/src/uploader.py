@@ -96,9 +96,9 @@ class VisToolUploader:
         if self.client_name is None or self.client_name != client_name:
             print("loading client config")
             bundle_config_path = os.path.join(PROJECT_ROOT, "client_configs", client_name, "bundle_config.yaml")
-            pipeline_config_path = os.path.join(PROJECT_ROOT, "client_configs", client_name, "setup_config.yaml")
-            print(f"setup_config_path: {pipeline_config_path}")
-            client_config = read_jinja_config(pipeline_config_path, bundle_config_path)
+            setup_config_path = os.path.join(PROJECT_ROOT, "client_configs", client_name, "setup_config.yaml")
+            print(f"setup_config_path: {setup_config_path}")
+            client_config = read_jinja_config(setup_config_path, bundle_config_path)
             self.client_config = client_config
             self.client_name = client_name
             self.bundle_config_path = bundle_config_path

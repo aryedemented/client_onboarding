@@ -15,9 +15,9 @@ class UnitsHandler:
     def get_magnitude(self, text):
         if text is None:
             return None
-        if text.isdigit():
+        if isinstance(text, str) and text.isdigit():
             return int(text)
-        elif text.isnumeric():
+        elif isinstance(text, str) and text.isnumeric():
             return float(text)
         try:
             return self.ureg(text).magnitude

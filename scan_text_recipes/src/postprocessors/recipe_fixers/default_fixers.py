@@ -51,8 +51,8 @@ class RecipeFixer(PostProcessor):
     """
     Base class for recipe fixers.
     """
-    def __init__(self, config: Dict, section_name: str, model_interface: ModelInterface,  language: str,
-                 refiner_prompts: BasePromptsContainer = None, setup_config: Dict = None, **kwargs):
+    def __init__(self, section_name: str, model_interface: ModelInterface,  language: str,
+                 refiner_prompts: BasePromptsContainer = None, setup_config: Dict = None, config: Dict = None, **kwargs):
         super().__init__(config, section_name, **kwargs)
 
         self.model_interface = load_or_create_instance(
@@ -60,7 +60,7 @@ class RecipeFixer(PostProcessor):
         )
         refiner_prompts = DefaultRefinerPromptsContainer(setup_config, language=language) if refiner_prompts is None else refiner_prompts
         self.prompts = load_or_create_instance(
-            refiner_prompts, BasePromptsContainer, PROMPTS_PACKAGE_PATH, **kwargs
+            refiner_prompts, BasePromptsContainer, PROMPTS_PACKAGE_PATH, setup_config=setup_config, language=language, **kwargs
         )
         self.units_interpreter = UnitsHandler()
 

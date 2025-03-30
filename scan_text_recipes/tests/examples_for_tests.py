@@ -12,7 +12,7 @@ def load_unstructured_text_test_recipe() -> str:
     :return: Unstructured recipe as a string.
     """
     # Define the path to the YAML file
-    text_file_path = os.path.join(PROJECT_ROOT, "tests", "classic_pancakes.txt")
+    text_file_path = os.path.join(PROJECT_ROOT, "tests", "pizza_italiano.txt")
 
     # Load the YAML file
     return read_text(text_file_path)
@@ -27,7 +27,7 @@ def load_structured_test_recipe():
     yaml_file_path = os.path.join(PROJECT_ROOT, "tests", "pizza_italiano.yaml")
 
     # Load the YAML file
-    return read_yaml(yaml_file_path, encoding='utf-8')
+    return read_yaml(yaml_file_path)
 
 
 def load_complex_text_test_recipe() -> str:
@@ -52,4 +52,4 @@ def load_test_setup_config() -> Dict:
     yaml_file_path = os.path.join(PROJECT_ROOT, "tests", "test_setup_config.yaml")
 
     # Load the YAML file
-    return read_yaml(yaml_file_path, encoding='utf-8')
+    return read_yaml(yaml_file_path)
