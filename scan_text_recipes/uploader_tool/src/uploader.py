@@ -51,13 +51,13 @@ class VisToolUploader:
             if uploaded_file is not None:
                 col2_container.write("Upload succeeded")
                 print("File Uploaded!")
+                self.upload_button_callback(uploaded_file)
                 if col2_container.button("סרוק מתכון"):
-                    self.upload_button_callback(uploaded_file)
                     print("scanning recipe")
                     if "data" not in st.session_state:
                         st.session_state.data = {}
                     st.session_state.data['recipe_dict'] = self.parse_recipe()
-                    # self.recipe_dict = read_yaml("D:\\Projects\\Kaufmann_and_Co\\recepies\\scan_code\\ScanRecepies\\structured_recipes\\pizza_italiano.yaml")
+                    # self.recipe_dict = read_yaml("D:\\Projects\\Kaufmann_and_Co\\recepies\\scan_code\\ScanRecepies\\structured_recipes\\italian_shakshuka.yaml")
         with self.graph_area:
             print("displaying graph")
             graph = self.build_recipe_graph(self.recipe_dict)
@@ -65,7 +65,6 @@ class VisToolUploader:
         with self.scheduler_area:
             scheduler_dict = build_schedule(self.recipe_dict)
             self.plot_schedule(scheduler_dict)
-
         with col2:
             if "data" in st.session_state:
                 hebrew_text(st.session_state.data["recipe_name"], h=4, container=col2_container)
@@ -84,7 +83,7 @@ class VisToolUploader:
                         table_place_holder=col2_container
                     )
                 with col6:
-                    list_of_resources = self.client_config['ALLOWED_RESOURCES']
+                    list_of_resources = list(self.client_config['ALLOWED_RESOURCES'].keys())
                     self.display_table(
                         "resources_table",
                         st.session_state.data['recipe_dict']['resources'],
@@ -242,7 +241,7 @@ class VisToolUploader:
 
         for item in recipe_dict.get("resources", []):
             graph.add_node(
-                item["name"], type="resource", preparation_time=item["preparation_time"], remarks=item["remarks"],
+                item["name"], type="resource", usage_time=item["usage_time"], remarks=item["remarks"],
                 color='lightgreen', size=50, shape='box'
             )
 
@@ -313,7 +312,7 @@ class VisToolUploader:
                 styles = ['background-color: red'] * len(row)
             elif 'quantity' in row and (row['quantity'] is None or pd.isna(row['quantity'])):
                 styles = ['background-color: lightsalmon'] * len(row)
-            elif 'preparation_time' in row and row['preparation_time'] is None:
+            elif 'usage_time' in row and row['usage_time'] is None:
                 styles = ['background-color: lightsalmon'] * len(row)
             elif 'units' in row and row['units'] is None:
                 styles = ['background-color: lightcoral'] * len(row)

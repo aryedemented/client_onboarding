@@ -8,13 +8,27 @@ from scan_text_recipes.src.prompt_organizers.graph_structure_refinement_prompts 
 from scan_text_recipes.utils.utils import load_or_create_instance, read_yaml
 
 
-def check_node(ingredient_name: str, recipe_dict: Dict[str, List], final_node_name: str) -> bool:
-    for edges in recipe_dict["edges"]:
-        if edges["from"] == ingredient_name:
-            if edges["to"] == final_node_name:
+from typing import Dict, List, Set
+
+
+def check_node(
+        ingredient_name: str, recipe_dict: Dict[str, List], final_node_name: str, visited: Set[str] = None
+) -> bool:
+    if visited is None:
+        visited = set()
+
+    if ingredient_name in visited:
+        return False  # Prevent infinite loop
+
+    visited.add(ingredient_name)
+
+    for edge in recipe_dict["edges"]:
+        if edge["from"] == ingredient_name:
+            if edge["to"] == final_node_name:
                 return True
-            else:
-                return check_node(edges["to"], recipe_dict, final_node_name)
+            if check_node(edge["to"], recipe_dict, final_node_name, visited):
+                return True
+
     return False
 
 

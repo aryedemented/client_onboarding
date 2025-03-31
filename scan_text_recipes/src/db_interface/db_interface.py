@@ -3,7 +3,9 @@ from typing import Dict, Tuple, List, Union
 
 import psycopg2
 
-from scan_text_recipes.utils.utils import read_yaml
+from scan_text_recipes.src import LOGGER_PACKAGE_PATH
+from scan_text_recipes.utils.logger.basic_logger import BaseLogger
+from scan_text_recipes.utils.utils import read_yaml, load_or_create_instance
 
 
 class BaseDatabaseInterface:
@@ -12,7 +14,10 @@ class BaseDatabaseInterface:
 
 class DatabaseInterface(BaseDatabaseInterface):
 
-    def __init__(self, db_config: Union[str, Dict], db_connect_config: Union[str, Dict]):
+    def __init__(self, db_config: Union[str, Dict], db_connect_config: Union[str, Dict], logger=None, **kwargs):
+        self.logger = load_or_create_instance(
+            logger, BaseLogger, LOGGER_PACKAGE_PATH, **{**{"name": self.__class__.__name__}, **kwargs}
+        )
         self.db_config = db_config if isinstance(db_config, dict) else read_yaml(db_config)
         self.db_connect_config = db_connect_config if isinstance(db_connect_config, dict) else read_yaml(db_connect_config)
         self.connection, self.cursor = self.connect_to_db()
@@ -31,10 +36,10 @@ class DatabaseInterface(BaseDatabaseInterface):
                 port=connect_params['port']
             )
             cur = conn.cursor()
-            print("Database connection established.")
+            self.logger.log("Database connection established.")
             return conn, cur
         except Exception as e:
-            print(f"Error connecting to database: {e}")
+            self.logger.error(f"Error connecting to database: {e}")
             return None, None
 
     def execute_query(self, query, *args, **kwargs):
@@ -56,13 +61,13 @@ class DatabaseInterface(BaseDatabaseInterface):
         for table_name in schema_config['TABLES_CREATION_ORDER']:
             table_props = schema_config['RECIPE_DATABASE'][table_name]
             query = self.create_table_sql(table_name, table_props)
-            print(f"Creating Table: {table_name}")
+            self.logger.info(f"Creating Table: {table_name}")
             self.execute_query(query.replace('"', "'"))
 
         for _, table_constraints in schema_config['CONSTRAINTS'].items():
             for table_constraint in table_constraints:
                 self.execute_query(table_constraint)
-        print("Tables created successfully!")
+        self.logger.log("Tables created successfully!")
 
     def drop_tables(self, schema_config: Dict):
         for table_name in schema_config['TABLES_CREATION_ORDER']:
@@ -84,8 +89,8 @@ class DatabaseInterface(BaseDatabaseInterface):
         for category_name, category_values in self.db_config['CATEGORIES'].items():
             query = self.create_category_sql(category_name, category_values)
             self.execute_query(query.replace('"', "'"))
-            print(f"Creating Category: {category_name}")
-        print("Categories created successfully!")
+            self.logger.info(f"Creating Category: {category_name}")
+        self.logger.log("Categories created successfully!")
 
     def drop_categories(self):
         for enum_name in self.db_config['CATEGORIES']:
@@ -136,9 +141,9 @@ class DatabaseInterface(BaseDatabaseInterface):
 
     def add_resource_to_recipe(self, resource: Dict, dish_id, resource_id):
         query = f"""
-                INSERT INTO recipe_resources (dish_id, resource_id, preparation_time, temperature, occupancy, instructions) 
-                VALUES ('{dish_id}', '{resource_id}', '{resource["preparation_time"]}', '{resource["temperature"]}', '{resource["occupancy"]}', '{resource["remarks"]}') 
-                ON CONFLICT (dish_id, resource_id, preparation_time, temperature, occupancy, instructions)
+                INSERT INTO recipe_resources (dish_id, resource_id, usage_time, temperature, occupancy, instructions) 
+                VALUES ('{dish_id}', '{resource_id}', '{resource["usage_time"]}', '{resource["temperature"]}', '{resource["occupancy"]}', '{resource["remarks"]}') 
+                ON CONFLICT (dish_id, resource_id, usage_time, temperature, occupancy, instructions)
                 DO NOTHING;
             """
         self.execute_query(query)
@@ -180,8 +185,8 @@ class DatabaseInterface(BaseDatabaseInterface):
             resource_id = self.add_resource_to_kitchen_setup(resource, resource_props)
             structured_recipe["resources"][idx]["resource_id"] = resource_id
             # TODO: FIX in pre-processing function
-            preparation_time = re.findall(r'\d+\.?\d*', resource["preparation_time"])
-            resource["preparation_time"] = preparation_time[0] if len(preparation_time) else 10
+            usage_time = re.findall(r'\d+\.?\d*', resource["usage_time"])
+            resource["usage_time"] = usage_time[0] if len(usage_time) else 10
             resource["temperature"] = 10
             resource["occupancy"] = 1
             self.add_resource_to_recipe(resource, dish_id, resource_id)
@@ -219,5 +224,5 @@ class DatabaseInterface(BaseDatabaseInterface):
 
             self.add_resource_ingredient_mapping(dish_id, from_node, from_id, to_node, to_id, edge["instructions"])
 
-        print(f"Successfully added dish {dish_name} to recipe")
+        self.logger.log(f"Successfully added dish {dish_name} to recipe")
         return structured_recipe

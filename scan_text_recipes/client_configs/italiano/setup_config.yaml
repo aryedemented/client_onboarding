@@ -1,28 +1,28 @@
 # This file used to configure available resources and ingredients in the kitchen
 
 ALLOWED_RESOURCES:
-  - "קערה"
-  - "מחבת"
-  - "תנור"
-  - "תבנית פיצה"
-  - "מקרר"
-  - "משתח עבודה"
+  "קערה": {"usage_time": "minutes"}
+  "מחבת": {"temperature": "Degrees Celsius", "usage_time": "minutes"}
+  "תנור": {"temperature": "Degrees Celsius", "usage_time": "minutes"}
+  "תבנית": {"temperature": "Degrees Celsius", "usage_time": "minutes"}
+  "מקרר": {"usage_time": "minutes"}
+  "משטח עבודה": {"usage_time": "minutes"}
 
 ALLOWED_INGREDIENTS:
-  "קמח": "g"
-  "שמרים יבשים": "g"
-  "סוכר": "g"
-  "מלח": "g"
-  "שמן זית": "ml"
-  "מים פושרים": "ml"
-  "עגבניות": "g"
-  "שום": "g"
-  "בזיליקום": "g"
-  "רסק עגבניות": "g"
-  "אורגנו יבש": "g"
-  "גבינה קשה מגוררת": "g"
-  "תוספות": "g"
-  "בצק פיצה": ""
-  "רוטב עגבניות": "g"
+  "קמח": {"quantity": "g"}
+  "שמרים יבשים":  {"quantity": "g"}
+  "סוכר":  {"quantity": "g"}
+  "מלח":  {"quantity": "g"}
+  "שמן זית":  {"quantity": "ml"}
+  "מים פושרים":  {"quantity": "ml"}
+  "עגבניות":  {"quantity": "g"}
+  "שום":  {"quantity": "g"}
+  "בזיליקום טרי":  {"quantity": "g"}
+  "רסק עגבניות":  {"quantity": "g"}
+  "אורגנו יבש":  {"quantity": "g"}
+  "גבינה קשה מגוררת":  {"quantity": "g"}
+  "תוספות":  {"quantity": "g"}
+  "בצק פיצה":  {"quantity": ""}
+  "רוטב עגבניות":  {"quantity": "g"}
 
-FINAL_NODE_NAME: "final_node"
+FINAL_NODE_NAME: "מוצר סופי"

@@ -117,26 +117,26 @@ ingredients:
 resources:
 - name: קערה
   occupancy: ''
-  preparation_time: ''
+  usage_time: ''
   remarks: לערבוב ולישת הבצק
   temperature: ''
 - name: משטח עבודה
   occupancy: ''
-  preparation_time: ''
+  usage_time: ''
   remarks: לרידוד הבצק
   temperature: ''
 - name: תבנית
   occupancy: ''
-  preparation_time: ''
+  usage_time: ''
   remarks: לאפיית הפיצה
   temperature: ''
 - name: מחבת
   occupancy: ''
-  preparation_time: ''
+  usage_time: ''
   remarks: להכנת רוטב העגבניות
   temperature: ''
 - name: תנור
   occupancy: ''
-  preparation_time: 15 דקות
+  usage_time: 15 דקות
   remarks: לאפיית הפיצה בחום של 200 מעלות
   temperature: '200'

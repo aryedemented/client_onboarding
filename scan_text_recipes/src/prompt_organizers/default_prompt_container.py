@@ -14,7 +14,7 @@ class DefaultPromptsContainer(BasePromptsContainer):
 
     def force_resources_prompt(self) -> str:
         return f"""
-            - Allowed resources are: {self.setup_config['ALLOWED_RESOURCES']}.
+            - Allowed resources are: {list(self.setup_config['ALLOWED_RESOURCES'].keys())}.
         """ if self.force_resources else ""
 
     def user_recipe_prompt(self, recipe_text: str, **kwargs) -> str:
@@ -57,7 +57,7 @@ class DefaultPromptsContainer(BasePromptsContainer):
             {"name": "dough", "quantity": "combined", "remarks": "instruction on how dough is created, if mentioned in the recipe, else leave blank"},
         ],
         "resources": [
-            {"name": "oven", "preparation_time": "10 min", "remarks" "instruction on how to bake in the oven, if mentioned in the recipe, else leave blank"},
+            {"name": "oven", "usage_time": "10 min", "remarks" "instruction on how to bake in the oven, if mentioned in the recipe, else leave blank"},
         ],
         "edges": [
             {"from": "flour", "to": "dough", "instructions": "instruction on how flour is utilized in the dough, if mentioned in the recipe, else leave blank"},

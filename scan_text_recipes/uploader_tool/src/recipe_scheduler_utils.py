@@ -43,7 +43,7 @@ def build_schedule(recipe_dict):
 
     # Step 3: Build resource time lookup
     prep_time = {
-        res["name"]: to_numeric(res.get("preparation_time", 0)) or 0
+        res["name"]: to_numeric(res.get("usage_time", 0)) or 0
         for res in recipe_dict.get("resources", [])
     }
 
@@ -98,8 +98,8 @@ if __name__ == '__main__':
             {"from": "תבנית", "to": "תנור"}
         ],
         "resources": [
-            {"name": "תנור", "preparation_time": "15 sec"},
-            {"name": "תבנית", "preparation_time": 3}
+            {"name": "תנור", "usage_time": "15 sec"},
+            {"name": "תבנית", "usage_time": 3}
         ]
     }
     schedule = build_schedule(sample_recipe)

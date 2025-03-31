@@ -69,11 +69,11 @@ ingredients:
   remarks: mix until just combined
 resources:
 - name: bowl
-  preparation_time: 0 min
+  usage_time: 0 min
   remarks: for mixing ingredients
 - name: greased pan
-  preparation_time: 0 min
+  usage_time: 0 min
   remarks: for cooking pancakes
 - name: stove
-  preparation_time: 0 min
+  usage_time: 0 min
   remarks: set to medium heat

@@ -76,7 +76,7 @@ RECIPE_DATABASE:
     id: "SERIAL PRIMARY KEY"
     dish_id: "INT REFERENCES dishes(id) ON DELETE SET NULL"
     resource_id: "INT REFERENCES resources(id) ON DELETE SET NULL"
-    preparation_time: "FLOAT NOT NULL"
+    usage_time: "FLOAT NOT NULL"
     temperature: "FLOAT"
     occupancy: "FLOAT NOT NULL"
     instructions: "TEXT"
@@ -104,7 +104,7 @@ CONSTRAINTS:
       ADD CONSTRAINT unique_recipe_ingredient UNIQUE (dish_id, ingredient_id, quantity);"
   recipe_resources:
     - "ALTER TABLE recipe_resources
-      ADD CONSTRAINT unique_recipe_resource UNIQUE (dish_id, resource_id, preparation_time, temperature, occupancy, instructions);"
+      ADD CONSTRAINT unique_recipe_resource UNIQUE (dish_id, resource_id, usage_time, temperature, occupancy, instructions);"
   resource_ingredient_mapping:
     - "ALTER TABLE resource_ingredient_mapping
       ADD CONSTRAINT unique_resource_ingredient_mapping UNIQUE (dish_id, from_node, from_id, to_node, to_id, instructions);"

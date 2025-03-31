@@ -29,23 +29,22 @@ PROCESSING_PIPELINE:
         segment_config:
 #          - RemoveFakeIngredients:
 #          - RemoveFakeResources:
-          - IngredientRecipeFixer:
+          - IngredientsSupplementaryFixer:
+              refiner_prompts: SupplementaryRefinerPromptsContainer
               model_interface: {{ model_interface_class }}
               config:
                 FIELDS:
                   - quantity:
                     - NotNull
                     - TypeFloat
-    - ResourceRecipeFixer:
+    - ResourcesSupplementaryFixer:
+        refiner_prompts: SupplementaryRefinerPromptsContainer
         model_interface: {{ model_interface_class }}
         config:
           FIELDS:
             - temperature:
                 - TypeFloat
-            - preparation_time:
-                - NotNull
-                - TypeFloat
-            - occupancy:
+            - usage_time:
                 - NotNull
                 - TypeFloat
     - UnitsTransformer:

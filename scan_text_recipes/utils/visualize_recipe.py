@@ -18,7 +18,7 @@ def create_recipe_graph(data):
     # Add resource nodes with tooltips
     for resource in data.get("resources", []):
         tooltip_text = resource["remarks"]
-        dot.node(resource["name"], label=f"{resource['name']}\n{resource['preparation_time']}", shape="box", tooltip=tooltip_text, style="filled", illcolor="lightblue")
+        dot.node(resource["name"], label=f"{resource['name']}\n{resource['usage_time']}", shape="box", tooltip=tooltip_text, style="filled", illcolor="lightblue")
 
     # Add edges with instructions as labels
     for edge in data.get("edges", []):

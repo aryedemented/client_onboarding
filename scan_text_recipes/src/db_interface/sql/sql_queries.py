@@ -107,9 +107,9 @@ def add_resource_to_kitchen_setup(conn, cur, resource: Dict, resource_props: Dic
 
 def add_resource_to_recipe(conn, cur, resource: Dict, dish_id, resource_id):
     query = f"""
-            INSERT INTO recipe_resources (dish_id, resource_id, preparation_time, temperature, occupancy, instructions) 
-            VALUES ('{dish_id}', '{resource_id}', '{resource["preparation_time"]}', '{resource["temperature"]}', '{resource["occupancy"]}', '{resource["remarks"]}') 
-            ON CONFLICT (dish_id, resource_id, preparation_time, temperature, occupancy, instructions)
+            INSERT INTO recipe_resources (dish_id, resource_id, usage_time, temperature, occupancy, instructions) 
+            VALUES ('{dish_id}', '{resource_id}', '{resource["usage_time"]}', '{resource["temperature"]}', '{resource["occupancy"]}', '{resource["remarks"]}') 
+            ON CONFLICT (dish_id, resource_id, usage_time, temperature, occupancy, instructions)
             DO NOTHING;
         """
     execute_query(conn, cur, query)
@@ -151,8 +151,8 @@ def insert_dish_into_db(conn, cur, structured_recipe: Dict, text_recipe: str, di
         resource_id = add_resource_to_kitchen_setup(conn, cur, resource, resource_props)
         structured_recipe["resources"][idx]["resource_id"] = resource_id
         # TODO: FIX in pre-processing function
-        preparation_time = re.findall(r'\d+\.?\d*', resource["preparation_time"])
-        resource["preparation_time"] = preparation_time[0] if len(preparation_time) else 10
+        usage_time = re.findall(r'\d+\.?\d*', resource["usage_time"])
+        resource["usage_time"] = usage_time[0] if len(usage_time) else 10
         resource["temperature"] = 10
         resource["occupancy"] = 1
         add_resource_to_recipe(conn, cur, resource, dish_id, resource_id)

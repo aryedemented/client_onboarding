@@ -13,7 +13,7 @@ class UnitsHandler:
         self.ureg = UnitRegistry()
 
     def get_magnitude(self, text):
-        if text is None:
+        if text is None or text == "":
             return None
         if isinstance(text, str) and text.isdigit():
             return int(text)

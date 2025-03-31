@@ -17,7 +17,7 @@ VALIDATORS:
       FIELDS:
         - temperature:
             - TypeFloat
-        - preparation_time:
+        - usage_time:
             - TypeFloat
             - NotNull
         - occupancy:

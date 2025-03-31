@@ -20,9 +20,9 @@ if __name__ == '__main__':
             ],
         'resources':
             [
-                {"remarks": "oven remark text", "name": "oven", "preparation_time": "10 min"},
-                {"name": "bowl", "preparation_time": "4 min", "remarks": "bowl remark text"},
-                {"name": "mixer", "preparation_time": "4 min", "remarks": "mixer remark text"},
+                {"remarks": "oven remark text", "name": "oven", "usage_time": "10 min"},
+                {"name": "bowl", "usage_time": "4 min", "remarks": "bowl remark text"},
+                {"name": "mixer", "usage_time": "4 min", "remarks": "mixer remark text"},
             ],
          }
 

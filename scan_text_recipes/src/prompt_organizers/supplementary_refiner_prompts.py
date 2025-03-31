@@ -23,7 +23,7 @@ class SupplementaryRefinerPromptsContainer(DefaultPromptsContainer):
             
             Provide answers to next questions in a list of exact order as presented and in exact specified format:
         """
-        text_questions = "\n".join(["Q: " + question.question + "\nA: " + question.format_text for question in questions])
+        text_questions = "\n".join(["Question: " + question.question for question in questions])
         refinement_prompt += text_questions + "\n"
         return refinement_prompt
 
@@ -34,7 +34,17 @@ class SupplementaryRefinerPromptsContainer(DefaultPromptsContainer):
         """
         return f"""
         Instructions:
-            - If value not found, leave the field empty.
-            - ** Respond only in provided form **.
-            - The response should be in original recipe language
+            - If value not found, leave the field empty
+            - Convert value if needed to the ** units specified in the question **.
+            - IMPORTANT: Even if the original recipe includes units, strip them and return ONLY the number in value field.
+            - ** Provides answers in exact order of provided questions **.
+            - Encapsulate all answers in one set of square brackets, so it could be read in JSON format
+            - Example of Expected Answer:
+            [
+                {{ "name": "קמח", "value": "1" , "units": "cup"}},
+                {{ "name": "סוכר", "value": "2" , "units": "tbsp"}},
+                {{ "name": "בצק", "value": "" , "units": ""}},
+                {{ "name": "תנור", "value": "10.5" , "units": "min"}},
+                ...
+            ]
             """
