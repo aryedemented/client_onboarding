@@ -45,6 +45,7 @@ PROCESSING_PIPELINE:
             - temperature:
                 - TypeFloat
             - usage_time:
-                - NotNull
                 - TypeFloat
     - UnitsTransformer:
+    - IngredientsNamesCorrector:
+    - ResourcesNamesCorrector:

@@ -8,13 +8,10 @@ import streamlit as st
 from streamlit.components.v1 import html
 import tempfile
 
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-
 from scan_text_recipes import PROJECT_ROOT
 from scan_text_recipes.src.run_pipeline import ReadRecipePipeline
-from scan_text_recipes.uploader_tool.src.recipe_scheduler_utils import build_schedule
-from scan_text_recipes.uploader_tool.src.st_utils import hebrew_text, reshape_hebrew
+from scan_text_recipes.uploader_tool.src.recipe_scheduler_utils import build_schedule, plot_schedule
+from scan_text_recipes.uploader_tool.src.st_utils import hebrew_text
 from scan_text_recipes.utils.utils import read_jinja_config, read_yaml
 
 
@@ -64,7 +61,9 @@ class VisToolUploader:
             self.show_graph(graph)
         with self.scheduler_area:
             scheduler_dict = build_schedule(self.recipe_dict)
-            self.plot_schedule(scheduler_dict)
+            fig = plot_schedule(scheduler_dict)
+            st.pyplot(fig, clear_figure=True)
+
         with col2:
             if "data" in st.session_state:
                 hebrew_text(st.session_state.data["recipe_name"], h=4, container=col2_container)
@@ -185,63 +184,18 @@ class VisToolUploader:
         st.session_state.data['recipe_dict'] = value
 
     @staticmethod
-    def plot_schedule(scheduler_dict: List[Dict]):
-        fig, ax = plt.subplots(figsize=(6, 0.8), dpi=800)
-        cmap = cm.get_cmap('Pastel1')
-
-        # Assign a unique color to each resource using the colormap
-        unique_resources = list({s["resource"] for s in scheduler_dict})
-        resource_indices = {res: idx for idx, res in enumerate(unique_resources)}
-        resource_color_map = {
-            res: cmap(i / max(len(unique_resources) - 1, 1))  # avoid division by zero
-            for i, res in enumerate(unique_resources)
-        }
-
-        # Plot each resource's occupancy strip
-        for entry in scheduler_dict:
-            y_pos = resource_indices[entry["resource"]]
-            color = resource_color_map[entry["resource"]]
-            ax.broken_barh(
-                [(entry["start"], entry["end"] - entry["start"])],
-                (y_pos - 0.4, 0.8),
-                facecolors=color
-            )
-            ax.text(
-                entry["start"] + 0.1,
-                y_pos,
-                reshape_hebrew(entry["resource"]),
-                va='center',
-                ha='left',
-                fontsize=5,
-                color='black'
-            )
-
-        # Clean aesthetics
-        for spine in ax.spines.values():
-            spine.set_visible(False)
-
-        ax.tick_params(axis='x', labelsize=5)
-        ax.set_yticklabels([])
-        ax.tick_params(axis='y', which='both', left=False, labelleft=False)
-        ax.set_xlabel("Time (min)", fontsize=3)
-        ax.set_title("Resource Occupancy Gantt Chart", fontsize=5)
-        ax.grid(False)
-
-        st.pyplot(fig, clear_figure=True)
-
-    @staticmethod
     def build_recipe_graph(recipe_dict: Dict) -> nx.DiGraph:
         graph = nx.DiGraph()
         # Add all nodes first: ingredients + resources
         for item in recipe_dict.get("ingredients", []):
             graph.add_node(
-                item["name"], type="ingredient", quantity=item["quantity"], remarks=item["remarks"],
+                item["id"], label=item["name"], type="ingredient", quantity=item["quantity"], remarks=item["remarks"],
                 color='lightblue', size=20, shape='box'
             )
 
         for item in recipe_dict.get("resources", []):
             graph.add_node(
-                item["name"], type="resource", usage_time=item["usage_time"], remarks=item["remarks"],
+                item["id"], label=item["name"], type="resource", usage_time=item["usage_time"], remarks=item["remarks"],
                 color='lightgreen', size=50, shape='box'
             )
 
@@ -323,6 +277,8 @@ class VisToolUploader:
         # Recompute highlights on the edited data
         def highlight_rows(row):
             styles = [''] * len(row)
+            if 'name' in row and row['name'] == "מוצר סופי":
+                return styles
             if 'name' in row and row['name'] not in list_of_items:
                 styles = ['background-color: red'] * len(row)
             elif 'quantity' in row and (row['quantity'] is None or pd.isna(row['quantity'])):

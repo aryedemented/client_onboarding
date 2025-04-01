@@ -39,8 +39,9 @@ class DefaultPromptsContainer(BasePromptsContainer):
     - Edges will have instructions explaining the process, that will be derived form the recipe and added as properties of the edges.
     - Every Ingredient should be connected to the resource it is used in.
     - Every Resource should be connected to all ingredients used in it, and have at least one outgoing edge connection to ingredient node.
-    - There should be no ingredient-to-ingredient or resource-to resource edges connections, all edges connections are either resource-to-ingredient or ingredient-to-resource.
+    - There should be no ingredient-to-ingredient or resource-to-resource edges connections, all edges connections are either resource-to-ingredient or ingredient-to-resource.
     - Field names should be in english, but the values should be in the original language of the recipe.
+    - Enumerate the ingredients and resources nodes starting from 0 and save them as id of the node. While names of resources and ingredients does not have to be unique, the "id" of nodes should be unique.
     Now extract this JSON for the given recipe: 
     """
 
@@ -52,17 +53,17 @@ class DefaultPromptsContainer(BasePromptsContainer):
     ### Expected JSON format **be exact with field names**:
     {
         "ingredients": [
-            {"name": "flour", "quantity": "1 cup", "remarks": "instruction on how to use flour, if mentioned in the recipe, else leave blank"},
-            {"name": "sugar", "quantity": "2 tbsp", "remarks": "instruction on how to use sugar, if mentioned in the recipe, else leave blank"},
-            {"name": "dough", "quantity": "combined", "remarks": "instruction on how dough is created, if mentioned in the recipe, else leave blank"},
+            {"id": 0, "name": "flour", "quantity": "1 cup", "remarks": "instruction on how to use flour, if mentioned in the recipe, else leave blank"},
+            {"id": 1, "name": "sugar", "quantity": "2 tbsp", "remarks": "instruction on how to use sugar, if mentioned in the recipe, else leave blank"},
+            {"id": 2, "name": "dough", "quantity": "combined", "remarks": "instruction on how dough is created, if mentioned in the recipe, else leave blank"},
         ],
         "resources": [
-            {"name": "oven", "usage_time": "10 min", "remarks" "instruction on how to bake in the oven, if mentioned in the recipe, else leave blank"},
+            {"id": 3, "name": "oven", "usage_time": "10 min", "remarks" "instruction on how to bake in the oven, if mentioned in the recipe, else leave blank"},
         ],
         "edges": [
-            {"from": "flour", "to": "dough", "instructions": "instruction on how flour is utilized in the dough, if mentioned in the recipe, else leave blank"},
-            {"from": "sugar", "to": "dough", "instructions": "instructions on how sugar is utilized in the dough, if mentioned in the recipe, else leave blank"},
-            {"from": "dough", "to": "oven", "instructions": "instructions on how dough is utilized in oven, if mentioned in the recipe, else leave blank"},
+            {"from": 0, "to": 3, "instructions": "instruction on how flour is utilized in the dough, if mentioned in the recipe, else leave blank"},
+            {"from": 1, "to": 3, "instructions": "instructions on how sugar is utilized in the dough, if mentioned in the recipe, else leave blank"},
+            {"from": 2, "to": 3, "instructions": "instructions on how dough is utilized in oven, if mentioned in the recipe, else leave blank"},
         ]
     }
     ###

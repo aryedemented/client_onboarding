@@ -101,7 +101,7 @@ class ReadRecipePipeline:
             if not res:
                 return False, recipe_dict
         # Save processed recipe to database
-
+        self.logger.log(f'Finished processing recipe')
         return res, recipe_dict
 
     def save_recipe_to_db(self, recipe_dict: Dict, recipe_text: str):

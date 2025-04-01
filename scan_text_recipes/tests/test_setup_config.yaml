@@ -25,5 +25,6 @@ ALLOWED_INGREDIENTS:
   "תוספות":  {"quantity": "g"}
   "בצק פיצה":  {"quantity": ""}
   "רוטב עגבניות":  {"quantity": "g"}
+  "לחם":  {"quantity": "g"}
 
 FINAL_NODE_NAME: "מוצר סופי"

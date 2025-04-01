@@ -13,7 +13,11 @@ from scan_text_recipes.utils.utils import read_yaml, replace_all_occurrences
 
 
 class NameCorrector(PostProcessor):
-    def __init__(self, setup_config: Union[str, Dict], section_name: str, section_key: str, **kwargs):
+    def __init__(
+            self, setup_config: Union[str, Dict],
+            section_name: str, section_key: str,
+            **kwargs
+    ):
         super().__init__(**kwargs)
         self.threshold = kwargs.get('threshold', 0.5)
         self.section_name = section_name
@@ -25,10 +29,7 @@ class NameCorrector(PostProcessor):
         self.model = AutoModel.from_pretrained("avichr/heBERT")
         self.model.eval()
         self.items_list = list(self.setup_config.get(section_key).keys())
-        self.tokenizer = AutoTokenizer.from_pretrained("avichr/heBERT")
-        self.model = AutoModel.from_pretrained("avichr/heBERT")
-        self.model.eval()
-
+        self.section_key = section_key
         self.embeddings = self._embed_sentences(self.items_list)
 
     def _embed_sentences(self, sentences: list[str]) -> torch.Tensor:
@@ -64,7 +65,7 @@ class NameCorrector(PostProcessor):
         replacements = {}
         for item_idx, item in enumerate(section):
             item_name = item.get("name")
-            if item_name in self.items_list:
+            if item_name in self.items_list or item_name == self.setup_config["FINAL_NODE_NAME"]:
                 continue
             best_match, score = self.find_best_match(item_name)
             if best_match:
@@ -73,10 +74,10 @@ class NameCorrector(PostProcessor):
                     replacements[section[item_idx]["name"]] = best_match
 
         recipe_dict = replace_all_occurrences(data=recipe_dict, replacement_dict=replacements)
-        return recipe_dict
+        return True, recipe_dict
 
 
-class IngredientCorrector(NameCorrector):
+class IngredientsNamesCorrector(NameCorrector):
     """
     Corrects ingredient names in the recipe.
     """
@@ -86,7 +87,7 @@ class IngredientCorrector(NameCorrector):
         )
 
 
-class ResourcesCorrector(NameCorrector):
+class ResourcesNamesCorrector(NameCorrector):
     """
     Corrects ingredient names in the recipe.
     """
@@ -97,14 +98,12 @@ class ResourcesCorrector(NameCorrector):
 
 
 if __name__ == '__main__':
-    names_corrector = IngredientCorrector(setup_config=load_test_setup_config(), logger=Logger(name="Test"))
+    names_corrector = IngredientsNamesCorrector(setup_config=load_test_setup_config(), logger=Logger(name="Test"))
     # Example usage:
-    query_terms = ["בזיליקום טרי", "תבנית פיצה", "שמן זית", "מחבת גדולה"]
     # structured_recipe = load_structured_test_recipe()
     structured_recipe = read_yaml("D:\\Projects\\Kaufmann_and_Co\\recepies\\scan_code\\ScanRecepies\\structured_recipes\\bruschetta.yaml")
     fixed_names_recipe = names_corrector.process_recipe(
         recipe_dict=structured_recipe,
         recipe_text=""  # not used here
     )
-
     print(fixed_names_recipe)
