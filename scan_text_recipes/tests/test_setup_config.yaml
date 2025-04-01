@@ -9,15 +9,16 @@ ALLOWED_RESOURCES:
   "משטח עבודה": {"usage_time": "minutes"}
 
 ALLOWED_INGREDIENTS:
+  "פילה דג לבן": {"quantity": "g"}
   "קמח": {"quantity": "g"}
   "שמרים יבשים":  {"quantity": "g"}
   "סוכר":  {"quantity": "g"}
   "מלח":  {"quantity": "g"}
   "שמן זית":  {"quantity": "ml"}
-  "מים פושרים":  {"quantity": "ml"}
+  "מים":  {"quantity": "ml"}
   "עגבניות":  {"quantity": "g"}
   "שום":  {"quantity": "g"}
-  "בזיליקום טרי":  {"quantity": "g"}
+  "בזיליקום":  {"quantity": "g"}
   "רסק עגבניות":  {"quantity": "g"}
   "אורגנו יבש":  {"quantity": "g"}
   "גבינה קשה מגוררת":  {"quantity": "g"}

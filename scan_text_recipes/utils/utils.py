@@ -161,3 +161,28 @@ def load_or_create_instance(input_, class_: Type, package_path: str, **kwargs):
         **kwargs
     )[0]
     return instance
+
+
+def replace_all_occurrences(data: Any, replacement_dict: Dict[str, str]) -> Any:
+    if isinstance(data, dict):
+        new_dict = {}
+        for key, value in data.items():
+            new_key = replacement_dict.get(key, key)
+            new_value = replace_all_occurrences(value, replacement_dict)
+            if isinstance(new_value, str):
+                for old, new in replacement_dict.items():
+                    new_value = new_value.replace(old, new)
+            new_dict[new_key] = new_value
+        return new_dict
+
+    elif isinstance(data, list):
+        return [replace_all_occurrences(item, replacement_dict) for item in data]
+
+    elif isinstance(data, str):
+        # Replace in string values
+        for old, new in replacement_dict.items():
+            data = data.replace(old, new)
+        return data
+
+    else:
+        return data  # Leave numbers, None, etc. untouched

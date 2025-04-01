@@ -49,4 +49,5 @@ class GraphEdgesPromptsContainer(DefaultPromptsContainer):
             - edges describe the relationship between resources and ingredients.
             - Graph is of a DAG structure, meaning that there are no cycles in the graph.
             - Graph final node named {self.setup_config['FINAL_NODE_NAME']}.
+            - Make sure graph remains acyclic. You can repeat nodes with same name, but do not create circular dependencies!
             """

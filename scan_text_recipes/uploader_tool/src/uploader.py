@@ -57,7 +57,7 @@ class VisToolUploader:
                     if "data" not in st.session_state:
                         st.session_state.data = {}
                     st.session_state.data['recipe_dict'] = self.parse_recipe()
-                    # self.recipe_dict = read_yaml("D:\\Projects\\Kaufmann_and_Co\\recepies\\scan_code\\ScanRecepies\\structured_recipes\\italian_shakshuka.yaml")
+                    # self.recipe_dict = read_yaml("D:\\Projects\\Kaufmann_and_Co\\recepies\\scan_code\\ScanRecepies\\structured_recipes\\bruschetta.yaml")
         with self.graph_area:
             print("displaying graph")
             graph = self.build_recipe_graph(self.recipe_dict)
@@ -291,9 +291,24 @@ class VisToolUploader:
         html(html_data, height=800, scrolling=True)
 
     @staticmethod
-    def display_table(table_name: str, data: Dict[str, List], table_place_holder=None, list_of_items: List[str] = None):
+    def expand_dict_columns(df: pd.DataFrame) -> pd.DataFrame:
+        new_cols = {}
+        for col in df.columns:
+            if df[col].apply(lambda x: isinstance(x, dict)).any():
+                # For rows where it's a dict, create new columns
+                expanded = df[col].dropna().apply(lambda x: x if isinstance(x, dict) else {}).apply(pd.Series)
+                # Prefix new columns with original column name
+                expanded.columns = [f"{k}_{col}" for k in expanded.columns]
+                new_cols[col] = expanded
+        # Combine everything
+        for col, expanded in new_cols.items():
+            df = df.drop(columns=[col])
+            df = pd.concat([df, expanded], axis=1)
+        return df
+
+    def display_table(self, table_name: str, data: Dict[str, List], table_place_holder=None, list_of_items: List[str] = None):
         list_of_items = list_of_items if list_of_items is not None else []
-        df = pd.DataFrame(data)
+        df = self.expand_dict_columns(pd.DataFrame(data))
 
         # Use data_editor for interactive edits
         with table_place_holder:
