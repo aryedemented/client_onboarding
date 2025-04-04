@@ -26,7 +26,11 @@ class BaseLogger:
         ...
 
 
-class DummyLogger:
+class DummyLogger(BaseLogger):
+    def __init__(self, **kwargs):
+        kwargs["name"] = "DummyLogger"
+        super().__init__(**kwargs)
+
     def log(self, message: str):
         ...
 

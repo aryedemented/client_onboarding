@@ -1,5 +1,4 @@
 import copy
-import os
 from typing import Union, Dict, List
 
 import torch
@@ -7,7 +6,6 @@ from sklearn.metrics.pairwise import cosine_similarity
 import torch.nn.functional as F
 from transformers import AutoTokenizer, AutoModel
 
-from scan_text_recipes import PROJECT_ROOT
 from scan_text_recipes.src.postprocessors.post_processors import PostProcessor
 from scan_text_recipes.tests.examples_for_tests import load_test_setup_config, load_structured_test_recipe
 from scan_text_recipes.utils.logger.basic_logger import Logger
@@ -62,12 +60,18 @@ class NameCorrector(PostProcessor):
         best_idx = scores.argmax()
         return self.items_list[best_idx], scores[best_idx].item()
 
+    def is_intermediate_ingredient(self, node: Dict) -> bool:
+        """
+        Check if the item is an intermediate ingredient.
+        """
+        return ("intermediate" in node and node['intermediate']) or node['name'] == self.setup_config["FINAL_NODE_NAME"]
+
     def process_recipe(self, recipe_dict: Dict[str, List], recipe_text: str, **kwargs) -> [bool, Dict[str, List]]:
         section = copy.deepcopy(recipe_dict[self.section_name])
         replacements = {}
         for item_idx, item in enumerate(section):
             item_name = item.get("name")
-            if item_name in self.items_list or item_name == self.setup_config["FINAL_NODE_NAME"]:
+            if item_name in self.items_list or self.is_intermediate_ingredient(item):
                 continue
             best_match, score = self.find_best_match(item_name)
             if best_match:
@@ -102,8 +106,7 @@ class ResourcesNamesCorrector(NameCorrector):
 if __name__ == '__main__':
     names_corrector = IngredientsNamesCorrector(setup_config=load_test_setup_config(), logger=Logger(name="Test"))
     # Example usage:
-    # structured_recipe = load_structured_test_recipe()
-    structured_recipe = read_yaml(os.path.join(PROJECT_ROOT, "..\\structured_recipes\\bruschetta.yaml"))
+    structured_recipe = load_structured_test_recipe()
     fixed_names_recipe = names_corrector.process_recipe(
         recipe_dict=structured_recipe,
         recipe_text=""  # not used here

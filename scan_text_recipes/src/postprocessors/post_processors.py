@@ -1,6 +1,6 @@
 import copy
 from abc import abstractmethod
-from typing import Dict, List
+from typing import Dict, List, Union
 
 from scan_text_recipes.src import POST_PROCESSORS_PACKAGE_PATH, LOGGER_PACKAGE_PATH
 from scan_text_recipes.src.loop_container import LoopContainer
@@ -22,6 +22,11 @@ class PostProcessor:
     @abstractmethod
     def process_recipe(self, recipe_dict: Dict[str, List], recipe_text: str, **kwargs) -> [bool, Dict[str, List]]:
         raise NotImplementedError("Subclasses should implement this method.")
+
+    @staticmethod
+    def get_final_node_id(recipe_dict:Dict) -> Union[None, int]:
+        node_num = [ingredient['id'] for ingredient in recipe_dict["ingredients"] if ingredient['name']]
+        return node_num[0] if len(node_num) > 0 else None
 
 
 class PostProcessorsLoopContainer(LoopContainer, PostProcessor):

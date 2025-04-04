@@ -1,30 +1,13 @@
 import copy
 from abc import abstractmethod
 from typing import Dict, List
-from dataclasses import dataclass
 
+from scan_text_recipes.src.issues_class_format import SupplementaryPromptQuestion
 from scan_text_recipes.src.postprocessors.recipe_fixers.default_fixers import RecipeFixer
 from scan_text_recipes.tests.examples_for_tests import load_structured_test_recipe, load_unstructured_text_test_recipe, \
     load_test_setup_config
 from scan_text_recipes.utils.logger.basic_logger import Logger
 from scan_text_recipes.utils.utils import list_it, read_yaml
-
-
-@dataclass
-class SupplementaryPromptQuestion:
-    format: str
-    section: str
-    field_name: str
-    section_index: int
-    units: str
-
-    @property
-    def question(self) -> str:
-        return f'What is the {self.field_name} for {self.section} in the recipe in "{self.units}" units?'
-
-    @property
-    def format_text(self) -> str:
-        return f'{{ "name": "{self.section}", "value": "NUMERIC VALUE ONLY" , "units": "{self.units}"}}'
 
 
 class SupplementaryRecipeFixer(RecipeFixer):
@@ -48,9 +31,9 @@ class SupplementaryRecipeFixer(RecipeFixer):
     def section_name(self):
         ...
 
-    def create_questions_user_prompt(self, recipe_dict: Dict[str, List], recipe_text: str) -> [str, List[SupplementaryPromptQuestion]]:
+    def find_issues(self, recipe_dict: Dict[str, List]) -> [str, List[SupplementaryPromptQuestion]]:
         section = copy.deepcopy(recipe_dict[self.section_name])
-        questions = []
+        issues = []
         for field in self.config['FIELDS']:
             for field_name in field:
                 for method in list_it(field[field_name]):
@@ -58,13 +41,16 @@ class SupplementaryRecipeFixer(RecipeFixer):
                         continue
                     for sec_idx, section_field in enumerate(section):
                         value = None
-                        if field_name not in section_field:
-                            section[sec_idx][field_name] = None
-                            try:
-                                value = float(str(section_field[field_name]))
-                            except ValueError:
-                                pass
+                        if field_name in section_field and field_name in section[sec_idx]:
+                            if 'intermediate' in section[sec_idx] and section[sec_idx]['intermediate']:
+                                continue
+                            else:
+                                try:
+                                    value = float(str(section_field[field_name]))
+                                except ValueError:
+                                    pass
                         if not getattr(self.validation_methods[method], 'validate')(value):
+                            # check if units are valid (not suppose to be happening)
                             if section[sec_idx]['name'] not in self.setup_units or field_name not in self.setup_units[section[sec_idx]['name']].keys():
                                 continue
                             question = SupplementaryPromptQuestion(
@@ -76,7 +62,13 @@ class SupplementaryRecipeFixer(RecipeFixer):
                             )
 
                             self.logger.warning(f': "{question.question}"')
-                            questions.append(question)
+                            issues.append(question)
+        issues = list(filter(lambda x: x is not None, issues))
+        return issues
+
+    def create_questions_user_prompt(self, recipe_dict: Dict[str, List], recipe_text: str) -> [str, List[
+            SupplementaryPromptQuestion]]:
+        questions = self.find_issues(recipe_dict)
 
         answer = self.prompts.user_recipe_prompt(
             questions=questions,

@@ -2,9 +2,9 @@
 
 ALLOWED_RESOURCES:
   "קערה": {"usage_time": "minutes"}
-  "מחבת": {"temperature": "Degrees Celsius", "usage_time": "minutes"}
+  "מחבת": {"usage_time": "minutes"}
   "תנור": {"temperature": "Degrees Celsius", "usage_time": "minutes"}
-  "תבנית": {"temperature": "Degrees Celsius", "usage_time": "minutes"}
+  "תבנית": {"usage_time": "minutes"}
   "מקרר": {"usage_time": "minutes"}
   "משטח עבודה": {"usage_time": "minutes"}
 
@@ -25,7 +25,7 @@ ALLOWED_INGREDIENTS:
   "תוספות":  {"quantity": "g"}
   "בצק פיצה":  {"quantity": ""}
   "רוטב עגבניות":  {"quantity": "g"}
-  "לחם":  {"quantity": "g"}
+  "בגט איטלקי":  {"quantity": "g"}
   "ברוסקטה מוכנה":  {"quantity": ""}
   "מרינדה":  {"quantity": ""}
 

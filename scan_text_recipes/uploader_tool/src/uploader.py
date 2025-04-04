@@ -12,7 +12,7 @@ from scan_text_recipes import PROJECT_ROOT
 from scan_text_recipes.src.run_pipeline import ReadRecipePipeline
 from scan_text_recipes.uploader_tool.src.recipe_scheduler_utils import build_schedule, plot_schedule
 from scan_text_recipes.uploader_tool.src.st_utils import hebrew_text
-from scan_text_recipes.utils.utils import read_jinja_config, read_yaml
+from scan_text_recipes.utils.utils import read_jinja_config
 
 
 class VisToolUploader:
@@ -277,13 +277,17 @@ class VisToolUploader:
         # Recompute highlights on the edited data
         def highlight_rows(row):
             styles = [''] * len(row)
+            if 'intermediate' in row and row['intermediate']:
+                return styles
             if 'name' in row and row['name'] == "מוצר סופי":
                 return styles
             if 'name' in row and row['name'] not in list_of_items:
                 styles = ['background-color: red'] * len(row)
-            elif 'quantity' in row and (row['quantity'] is None or pd.isna(row['quantity'])):
+            elif 'quantity' in row and pd.isna(pd.to_numeric(row['quantity'], errors='coerce')):
                 styles = ['background-color: lightsalmon'] * len(row)
-            elif 'usage_time' in row and row['usage_time'] is None:
+            elif 'usage_time' in row and pd.isna(pd.to_numeric(row['usage_time'], errors='coerce')):
+                styles = ['background-color: lightsalmon'] * len(row)
+            elif 'temperature' in row and pd.isna(pd.to_numeric(row['temperature'], errors='coerce')):
                 styles = ['background-color: lightsalmon'] * len(row)
             elif 'units' in row and row['units'] is None:
                 styles = ['background-color: lightcoral'] * len(row)

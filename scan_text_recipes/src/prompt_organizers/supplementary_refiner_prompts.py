@@ -1,6 +1,6 @@
 from typing import List, Dict
 
-from scan_text_recipes.src.postprocessors.recipe_fixers.supplementary_fixers import SupplementaryPromptQuestion
+from scan_text_recipes.src.issues_class_format import SupplementaryPromptQuestion
 from scan_text_recipes.src.prompt_organizers.default_prompt_container import DefaultPromptsContainer
 
 

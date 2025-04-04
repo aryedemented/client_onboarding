@@ -6,8 +6,6 @@ load_dotenv(dotenv_path=env_path)
 import os
 from typing import Dict
 
-from dotenv import load_dotenv
-
 from scan_text_recipes import PROJECT_ROOT
 from scan_text_recipes.src import PRE_PROCESSORS_PACKAGE_PATH, MAIN_PROCESSORS_PACKAGE_PATH, \
     POST_PROCESSORS_PACKAGE_PATH, DB_PACKAGE_PATH, LOGGER_PACKAGE_PATH

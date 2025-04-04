@@ -1,13 +1,7 @@
-from dataclasses import dataclass
 from typing import List
 
+from scan_text_recipes.src.issues_class_format import Issue
 from scan_text_recipes.src.prompt_organizers.default_prompt_container import DefaultPromptsContainer
-
-
-@dataclass
-class Issue:
-    problem: str
-    solution: str
 
 
 class GraphEdgesPromptsContainer(DefaultPromptsContainer):
