@@ -1,5 +1,12 @@
+from pathlib import Path
+from dotenv import load_dotenv
+env_path = Path(__file__).resolve().parent.parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
+
 import os
 from typing import Dict
+
+from dotenv import load_dotenv
 
 from scan_text_recipes import PROJECT_ROOT
 from scan_text_recipes.src import PRE_PROCESSORS_PACKAGE_PATH, MAIN_PROCESSORS_PACKAGE_PATH, \
@@ -18,7 +25,7 @@ from scan_text_recipes.utils.visualize_recipe import create_recipe_graph
 class ReadRecipePipeline:
     def __init__(
             self,
-            bundle_config_path: str,    # path to the bundle config, user-related config
+            client_config_path: str,    # path to the bundle config, user-related config
             model_api_keys_path: str,   # connect configuration file - connect to model
             db_connection_config_path: str,  # database connection configuration file
             pipeline_config_path: str = None,  # processing pipeline config, lists of available post, pre and main processors
@@ -30,15 +37,15 @@ class ReadRecipePipeline:
         model_config_path = model_config_path if model_config_path else os.path.join(PROJECT_ROOT, "config", "model_config.yaml")
 
         # Init Pipeline Config
-        self.pipeline_props = read_jinja_config(pipeline_config_path, bundle_config_path)
-        pipeline_segments = self.pipeline_props.pop('PROCESSING_PIPELINE')
-        db_interface_config = self.pipeline_props.pop('DATABASE_INTERFACE')
+        self.client_pipeline_config = read_jinja_config(pipeline_config_path, client_config_path)
+        pipeline_segments = self.client_pipeline_config.pop('PROCESSING_PIPELINE')
+        db_interface_config = self.client_pipeline_config.pop('DATABASE_INTERFACE')
 
         # Init Logger
-        if 'logger' in self.pipeline_props:
-            self.pipeline_props['logger'] = logger if logger else self.pipeline_props['logger']
+        if 'logger' in self.client_pipeline_config:
+            self.client_pipeline_config['logger'] = logger if logger else self.client_pipeline_config['logger']
             self.logger = load_or_create_instance(
-                self.pipeline_props['logger'], BaseLogger, LOGGER_PACKAGE_PATH, name=self.__class__.__name__,
+                self.client_pipeline_config['logger'], BaseLogger, LOGGER_PACKAGE_PATH, name=self.__class__.__name__,
             )
         # Init Model Interface
         self.model_config = read_yaml(model_config_path)
@@ -50,7 +57,7 @@ class ReadRecipePipeline:
             package_path=PRE_PROCESSORS_PACKAGE_PATH,
             segment_config=pipeline_segments['PRE_PROCESSORS'],
             class_type=PreProcessor,
-            **self.pipeline_props
+            **self.client_pipeline_config
         )
 
         # Init Main Processors
@@ -58,21 +65,21 @@ class ReadRecipePipeline:
             package_path=MAIN_PROCESSORS_PACKAGE_PATH,
             segment_config=[pipeline_segments['PROCESSOR']],
             class_type=BaseMainProcessor,
-            **self.pipeline_props
+            **self.client_pipeline_config
         )[0]
         # Init Postprocessors
         self.post_processors = initialize_pipeline_segments(
             package_path=POST_PROCESSORS_PACKAGE_PATH,
             segment_config=pipeline_segments['POST_PROCESSORS'],
             class_type=PostProcessor,
-            **self.pipeline_props
+            **self.client_pipeline_config
         )
 
         # Init Database Connection
         self.db_interface = load_or_create_instance(
             db_interface_config, BaseDatabaseInterface, DB_PACKAGE_PATH,
             **{'db_connect_config': db_connection_config_path},
-            **self.pipeline_props
+            **self.client_pipeline_config
         )
 
     def run_pipeline(self, recipe_text: str) -> [bool, Dict]:
@@ -115,15 +122,15 @@ class ReadRecipePipeline:
 if __name__ == '__main__':
     # Example usage
     # Client - related information
-    client_name = "italiano"
-    bundle_config = os.path.join(PROJECT_ROOT, "client_configs", client_name, "bundle_config.yaml")
+    client_name = os.environ.get("CLIENT_NAME")
+    client_config = os.path.join(PROJECT_ROOT, "client_configs", client_name, "client_config.yaml")
     # Model config
     model_api_keys = os.path.join(PROJECT_ROOT, "config", "api_keys.yaml")
     # Database config
     db_connection_config = os.path.join(PROJECT_ROOT, "config", "db_connect_config.yaml")
 
     pipeline = ReadRecipePipeline(
-        bundle_config,
+        client_config,
         model_api_keys,
         db_connection_config
     )

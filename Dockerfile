@@ -11,7 +11,9 @@ WORKDIR /ScanRecepies
 COPY . .
 
 # Install requirements (from the src folder)
-RUN pip install --upgrade pip && pip install -r scan_text_recipes/requirements.txt
+RUN pip install --upgrade pip && pip install -r requirements.txt
+
+ENV PYTHONPATH=/ScanRecepies
 
 # Set default command to run your pipeline
 CMD ["python", "scan_text_recipes/src/run_pipeline.py"]

@@ -1,0 +1,8 @@
+{% set logger = "Logger" %}
+{% set force_ingredients = True %}
+{% set force_resources = True %}
+{% set setup_config = "scan_text_recipes/client_configs/aroma/setup_config.yaml" %}
+{% set db_config = "scan_text_recipes/client_configs/aroma/db_config.yaml" %}
+{% set model_interface_class = "RemoteAPIModelInterface" %}
+{% set language = "English" %}
+{% set db_interface_class = "DatabaseInterface" %}

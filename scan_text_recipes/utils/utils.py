@@ -1,6 +1,7 @@
 import json
 import os
 from inspect import isabstract
+from pathlib import Path
 from typing import Dict, List, Dict, Any, Type
 from ruamel.yaml import YAML
 
@@ -84,13 +85,20 @@ def read_schema_config() -> Dict:
 
 def read_jinja_config(config_file: str, template_file: str) -> Dict:
     with open(config_file, encoding='utf-8') as f_config:
-        config_data = f_config.read()  # ✅ Ignores comments
+        config_data = f_config.read()
+
     with open(template_file, encoding='utf-8') as f_template:
         yaml_template = f_template.read()
 
     rendered_variables = Template(yaml_template).module.__dict__
 
-    # Create Jinja template and render
+    # Fix: resolve file paths to be absolute paths inside container
+    for var in ["setup_config", "db_config"]:
+        if var in rendered_variables:
+            rendered_variables[var] = str(
+                (Path(PROJECT_ROOT) / rendered_variables[var]).resolve()
+            )
+
     template = Template(config_data)
     rendered_yaml = template.render(rendered_variables)
     return yaml.safe_load(rendered_yaml)

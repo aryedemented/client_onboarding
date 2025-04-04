@@ -1,4 +1,5 @@
 import copy
+import os
 from typing import Union, Dict, List
 
 import torch
@@ -6,6 +7,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 import torch.nn.functional as F
 from transformers import AutoTokenizer, AutoModel
 
+from scan_text_recipes import PROJECT_ROOT
 from scan_text_recipes.src.postprocessors.post_processors import PostProcessor
 from scan_text_recipes.tests.examples_for_tests import load_test_setup_config, load_structured_test_recipe
 from scan_text_recipes.utils.logger.basic_logger import Logger
@@ -101,7 +103,7 @@ if __name__ == '__main__':
     names_corrector = IngredientsNamesCorrector(setup_config=load_test_setup_config(), logger=Logger(name="Test"))
     # Example usage:
     # structured_recipe = load_structured_test_recipe()
-    structured_recipe = read_yaml("D:\\Projects\\Kaufmann_and_Co\\recepies\\scan_code\\ScanRecepies\\structured_recipes\\bruschetta.yaml")
+    structured_recipe = read_yaml(os.path.join(PROJECT_ROOT, "..\\structured_recipes\\bruschetta.yaml"))
     fixed_names_recipe = names_corrector.process_recipe(
         recipe_dict=structured_recipe,
         recipe_text=""  # not used here

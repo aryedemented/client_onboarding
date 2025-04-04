@@ -54,7 +54,7 @@ class VisToolUploader:
                     if "data" not in st.session_state:
                         st.session_state.data = {}
                     st.session_state.data['recipe_dict'] = self.parse_recipe()
-                    # self.recipe_dict = read_yaml("D:\\Projects\\Kaufmann_and_Co\\recepies\\scan_code\\ScanRecepies\\structured_recipes\\bruschetta.yaml")
+                    # self.recipe_dict = read_yaml(os.path.join(PROJECT_ROOT, "..\\structured_recipes\\bruschetta.yaml"))
         with self.graph_area:
             print("displaying graph")
             graph = self.build_recipe_graph(self.recipe_dict)
@@ -93,7 +93,7 @@ class VisToolUploader:
     def load_config(self, client_name: str):
         if self.client_name is None or self.client_name != client_name:
             print("loading client config")
-            bundle_config_path = os.path.join(PROJECT_ROOT, "client_configs", client_name, "bundle_config.yaml")
+            bundle_config_path = os.path.join(PROJECT_ROOT, "client_configs", client_name, "client_config.yaml")
             setup_config_path = os.path.join(PROJECT_ROOT, "client_configs", client_name, "setup_config.yaml")
             print(f"setup_config_path: {setup_config_path}")
             client_config = read_jinja_config(setup_config_path, bundle_config_path)
