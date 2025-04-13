@@ -1,3 +1,4 @@
+import os
 import re
 from typing import Dict, Tuple, List, Union
 
@@ -39,13 +40,12 @@ class DatabaseInterface(BaseDatabaseInterface):
         Connects to the database using the provided configuration.
         """
         try:
-            connect_params = self.db_connect_config['DB_CONNECT_PARAMS']
             conn = psycopg2.connect(
-                dbname=connect_params['dbname'],
-                user=connect_params['user'],
-                password=connect_params['password'],
-                host=connect_params['host'],
-                port=connect_params['port']
+                dbname=os.environ.get('dbname'),
+                user=os.environ.get('user'),
+                password=os.environ.get('password'),
+                host=os.environ.get("DB_HOST"),
+                port=os.environ.get('port')
             )
             cur = conn.cursor()
             self.logger.log("Database connection established.")

@@ -1,4 +1,5 @@
 import inspect
+import os
 import pkgutil
 from pydoc import locate
 from typing import Dict, Callable, List, Type, Any
@@ -63,3 +64,7 @@ def dynamic_import_from_package(
                 classes[name] = cls
 
     return classes
+
+
+def is_running_in_aws() -> bool:
+    return os.environ.get("AWS_EXECUTION_ENV") is not None

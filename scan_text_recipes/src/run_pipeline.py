@@ -1,7 +1,11 @@
 from pathlib import Path
 from dotenv import load_dotenv
+
+from scan_text_recipes.utils.file_utils import is_running_in_aws
+
 env_path = Path(__file__).resolve().parent.parent.parent / ".env"
 load_dotenv(dotenv_path=env_path)
+import boto3
 
 import os
 from typing import Dict
@@ -21,6 +25,11 @@ from scan_text_recipes.utils.visualize_recipe import create_recipe_graph
 
 
 class ReadRecipePipeline:
+    bucket_name = None
+    input_key = None
+    output_key = None
+    s3_client = None
+
     def __init__(
             self,
             client_config_path: str,    # path to the bundle config, user-related config
@@ -73,12 +82,26 @@ class ReadRecipePipeline:
             **self.client_pipeline_config
         )
 
+        if is_running_in_aws():
+            self.init_aws()
+
         # Init Database Connection
         self.db_interface = load_or_create_instance(
             db_interface_config, BaseDatabaseInterface, DB_PACKAGE_PATH,
             **{'db_connect_config': db_connection_config_path},
             **self.client_pipeline_config
         )
+
+    def init_aws(self):
+        client_name = os.environ.get("CLIENT_NAME")
+        dish_name = os.environ.get("DISH_NAME")
+        self.bucket_name = os.environ.get("S3_BUCKET")
+
+        # S3 Paths
+        client_prefix = f"{client_name}/"
+        self.input_key = f"{client_prefix}original_recipes/{dish_name}.txt"
+        self.output_key = f"{client_prefix}structured_recipes/{dish_name}.yaml"
+        self.s3_client = boto3.client('s3')
 
     def run_pipeline(self, recipe_text: str) -> [bool, Dict]:
         """
@@ -116,7 +139,33 @@ class ReadRecipePipeline:
         # Save the recipe to the database
         self.db_interface.insert_recipe_into_db(
             structured_recipe=recipe_dict, text_recipe=recipe_text, dish_name=dish_name
-        )
+    )
+
+    def save_structured_recipe(self, recipe_dict: Dict, dish_name: str) -> None:
+        """
+
+        :param recipe_dict: processed recipe
+        :param dish_name:
+        :return:
+        """
+        if is_running_in_aws():
+            local_output_path = f"/tmp/{dish_name}.yaml"
+            write_yaml(recipe_dict, local_output_path, encoding="utf-8")
+            self.s3_client.upload_file(local_output_path, self.bucket_name, self.output_key)
+        else:
+            write_yaml(recipe_dict, os.path.join(PROJECT_ROOT, "..", "structured_recipes", f"{dish_name}.yaml"), encoding="utf-8")
+
+    def load_text_recipe(self, dish_name: str) -> str:
+        """
+        Load the text recipe from the given path.
+        """
+        if is_running_in_aws():
+            s3 = boto3.client('s3')
+            local_input_path = f"/tmp/{dish_name}.txt"
+            s3.download_file(self.bucket_name, self.input_key, local_input_path)
+        else:
+            local_input_path = os.path.join(PROJECT_ROOT, "..", "recipes", client_name, f"{dish_name}.txt")
+        return read_text(local_input_path)
 
 
 if __name__ == '__main__':
@@ -145,6 +194,7 @@ if __name__ == '__main__':
     # Save the processed recipe to the database
     write_yaml(processed_recipe, os.path.join(PROJECT_ROOT, "..", "structured_recipes", f"{dish_name}.yaml"), encoding='utf-8')
     pipeline.save_recipe_to_db(recipe_dict=processed_recipe, recipe_text=loaded_recipe_text, dish_name=dish_name)
+    pipeline.save_structured_recipe(recipe_dict=processed_recipe, recipe_text=loaded_recipe_text, dish_name=dish_name)
     print(processed_recipe)
     graph = create_recipe_graph(processed_recipe)
     graph.render(os.path.join(PROJECT_ROOT, "..", "structured_recipes", "tmp"), view=True)  # Saves and opens the graph
