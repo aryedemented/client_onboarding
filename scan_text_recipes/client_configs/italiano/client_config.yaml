@@ -2,7 +2,7 @@
 {% set force_ingredients = False %}
 {% set force_resources = False %}
 {% set setup_config = "client_configs/italiano/setup_config.yaml" %}
-{% set db_config = "client_configs/italiano/db_config.yaml" %}
+{% set db_config = "client_configs/italiano/db_schema_config.yaml" %}
 {% set model_interface_class = "RemoteAPIModelInterface" %}
 {% set language = "Hebrew" %}
 {% set db_interface_class = "DatabaseInterface" %}

@@ -1,11 +1,12 @@
 import re
 from typing import Dict, Tuple, List, Union
 
+import numpy as np
 import psycopg2
 
 from scan_text_recipes.src import LOGGER_PACKAGE_PATH
 from scan_text_recipes.utils.logger.basic_logger import BaseLogger
-from scan_text_recipes.utils.utils import read_yaml, load_or_create_instance
+from scan_text_recipes.utils.utils import read_yaml, load_or_create_instance, remove_special_characters
 
 
 class BaseDatabaseInterface:
@@ -14,13 +15,24 @@ class BaseDatabaseInterface:
 
 class DatabaseInterface(BaseDatabaseInterface):
 
-    def __init__(self, db_config: Union[str, Dict], db_connect_config: Union[str, Dict], logger=None, **kwargs):
+    def __init__(
+            self, db_config: Union[str, Dict], db_connect_config: Union[str, Dict], setup_config: Union[str, Dict],
+            logger=None, **kwargs
+    ):
         self.logger = load_or_create_instance(
             logger, BaseLogger, LOGGER_PACKAGE_PATH, **{**{"name": self.__class__.__name__}, **kwargs}
         )
         self.db_config = db_config if isinstance(db_config, dict) else read_yaml(db_config)
+        self.setup_config = setup_config if isinstance(setup_config, dict) else read_yaml(setup_config)
         self.db_connect_config = db_connect_config if isinstance(db_connect_config, dict) else read_yaml(db_connect_config)
         self.connection, self.cursor = self.connect_to_db()
+
+        # drop tables for debug only
+        self.drop_tables(self.db_config)
+        self.drop_categories()
+
+        self.create_categories()
+        self.create_tables(self.db_config)
 
     def connect_to_db(self) -> Tuple:
         """
@@ -79,7 +91,7 @@ class DatabaseInterface(BaseDatabaseInterface):
         return f"""
         DO $$
         BEGIN
-            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typename = '{category_name}') THEN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = '{category_name}') THEN
                 CREATE TYPE {category_name} AS ENUM {str((*category_values,))};
             END IF;
         END $$;
@@ -108,7 +120,7 @@ class DatabaseInterface(BaseDatabaseInterface):
         res = self.execute_query(query)
         return res if res is None else res[0][0]
 
-    def add_ingredient_to_inventory(self, ingredient: Dict, category_id: str, units: str, description: str):
+    def add_ingredient_to_inventory(self, ingredient: Dict, category_id: str, description: str, units: str):
         query = f"""
                 INSERT INTO ingredients (name, ingredient_description, category_id, units) 
                 VALUES ('{ingredient["name"]}', '{description}', '{category_id}', '{units}') 
@@ -120,9 +132,10 @@ class DatabaseInterface(BaseDatabaseInterface):
         return res if res is None else res[0][0]
 
     def add_ingredient_to_recipe(self, ingredient: Dict, dish_id: int, ingredient_id: int):
+        quantity = np.nan if ingredient['quantity'] is None else ingredient['quantity']
         query = f"""
-                INSERT INTO recipe_ingredients (dish_id, ingredient_id, quantity, instructions) 
-                VALUES ('{dish_id}', '{ingredient_id}', '{ingredient["quantity"]}', '{ingredient["remarks"]}') 
+                INSERT INTO recipe_ingredients (dish_id, ingredient_id, quantity, instructions, intermediate) 
+                VALUES ('{dish_id}', '{ingredient_id}', '{quantity}', '{ingredient["instructions"]}', '{ingredient["intermediate"]}') 
                 ON CONFLICT (dish_id, ingredient_id, quantity)
                 DO NOTHING;
             """
@@ -130,8 +143,8 @@ class DatabaseInterface(BaseDatabaseInterface):
 
     def add_resource_to_kitchen_setup(self, resource: Dict, resource_props: Dict):
         query = f"""
-                INSERT INTO resources (name, resource_description, volume, max_temperature, capacity_units) 
-                VALUES ('{resource["name"]}', '{resource_props["resource_description"]}', {resource_props["max_temperature"]}, {resource_props["volume"]}, '{resource_props["capacity_units"]}') 
+                INSERT INTO resources (name, resource_description, volume, max_temperature) 
+                VALUES ('{resource["name"]}', '{resource_props["resource_description"]}', '{resource_props["volume"]}', '{resource_props["max_temperature"]}')
                 ON CONFLICT (name)
                 DO UPDATE SET name = EXCLUDED.name
                 RETURNING id;
@@ -142,87 +155,72 @@ class DatabaseInterface(BaseDatabaseInterface):
     def add_resource_to_recipe(self, resource: Dict, dish_id, resource_id):
         query = f"""
                 INSERT INTO recipe_resources (dish_id, resource_id, usage_time, temperature, occupancy, instructions) 
-                VALUES ('{dish_id}', '{resource_id}', '{resource["usage_time"]}', '{resource["temperature"]}', '{resource["occupancy"]}', '{resource["remarks"]}') 
+                VALUES ('{dish_id}', '{resource_id}', '{resource["usage_time"]}', '{resource["temperature"]}', '{resource["occupancy"]}', '{resource["instructions"]}') 
                 ON CONFLICT (dish_id, resource_id, usage_time, temperature, occupancy, instructions)
                 DO NOTHING;
             """
         self.execute_query(query)
 
-    def add_resource_ingredient_mapping(self, dish_id: int, from_node: str, from_id: int, to_node: str, to_id: int,
-                                        instructions: str):
+    def add_resource_ingredient_mapping(self, dish_id: int, from_id: int, to_id: int, instructions: str):
         query = f"""
-                INSERT INTO resource_ingredient_mapping (dish_id, from_node, from_id, to_node, to_id, instructions)
-                VALUES ('{dish_id}', '{from_node}', '{from_id}', '{to_node}', '{to_id}', '{instructions}') 
-                ON CONFLICT (dish_id, from_node, from_id, to_node, to_id, instructions)
+                INSERT INTO resource_ingredient_mapping (dish_id, from_id, to_id, instructions)
+                VALUES ('{dish_id}', '{from_id}', '{to_id}', '{instructions}') 
+                ON CONFLICT (dish_id, from_id, to_id)
                 DO NOTHING;
             """
         self.execute_query(query)
 
-    def insert_dish_into_db(self, structured_recipe: Dict, text_recipe: str, dish_name: str):
+    @staticmethod
+    def expand_nested_dict(d: Dict) -> Dict:
+        expanded = {}
+        for key, value in d.items():
+            if isinstance(value, dict):
+                for subkey, subval in value.items():
+                    expanded[f"{subkey}_{key}"] = subval
+            else:
+                expanded[key] = value
+        return expanded
+
+    def insert_recipe_into_db(self, structured_recipe: Dict, text_recipe: str, dish_name: str):
         # Insert dish into main table
+        text_recipe = remove_special_characters(text_recipe)
         default_dish_type = "Main Dish"  # for now
+        self.logger.info(f"Adding dish to kitchen setup: {dish_name}")
         dish_id = self.insert_dish(description=text_recipe, name=dish_name, dish_type=default_dish_type)
 
         # Insert Ingredients
         default_category_id = "Other"
-        default_units = 'gr'
         default_description = ""
         for idx, ingredient in enumerate(structured_recipe["ingredients"]):
+            units = "units"
+            if ingredient['name'] in self.setup_config['ALLOWED_INGREDIENTS'] and 'quantity' in self.setup_config['ALLOWED_INGREDIENTS'][ingredient['name']]:
+                units = self.setup_config['ALLOWED_INGREDIENTS'][ingredient['name']]['quantity']
+            self.logger.log(f"Adding ingredient to kitchen setup: {ingredient}")
             ingredient_id = self.add_ingredient_to_inventory(
-                ingredient, category_id=default_category_id, units=default_units,
+                ingredient, category_id=default_category_id, units=units,
                 description=default_description
             )
             structured_recipe["ingredients"][idx]['ingredient_id'] = ingredient_id
-            # TODO: FIX IN In pre-processing function
-            quantity = re.findall(r'\d+\.?\d*', ingredient['quantity'])
-            ingredient['quantity'] = quantity[0] if len(quantity) else 1
+            self.logger.info(f"Adding ingredient to recipe: {ingredient}")
             self.add_ingredient_to_recipe(ingredient, dish_id, ingredient_id)
 
         # Insert Resources
         for idx, resource in enumerate(structured_recipe["resources"]):
             # TODO: FIX in pre-processing function
-            resource_props = dict(resource_description="", volume=10, capacity_units=default_units, max_temperature=100)
+            resource_props = dict(resource_description="", volume=10, max_temperature=100)
+            self.logger.info(f"Adding resource to kitchen setup: {resource}")
             resource_id = self.add_resource_to_kitchen_setup(resource, resource_props)
             structured_recipe["resources"][idx]["resource_id"] = resource_id
             # TODO: FIX in pre-processing function
-            usage_time = re.findall(r'\d+\.?\d*', resource["usage_time"])
-            resource["usage_time"] = usage_time[0] if len(usage_time) else 10
-            resource["temperature"] = 10
             resource["occupancy"] = 1
+            resource["temperature"] = np.nan if ("temperature" not in resource or resource["temperature"] is None) else resource["temperature"]
+            self.logger.info(f"Adding resource to recipe: {resource}")
             self.add_resource_to_recipe(resource, dish_id, resource_id)
 
         # Insert resource - ingredient mapping
         for edge in structured_recipe["edges"]:
-            # TODO: fix later in correct code:
-            from_resource_id = [res['resource_id'] for res in structured_recipe['resources'] if
-                                res['name'] == edge['from']]
-            from_ingredient_id = [ing['ingredient_id'] for ing in structured_recipe['ingredients'] if
-                                  ing['name'] == edge['from']]
-            if len(from_resource_id):
-                from_node = "resource"
-                from_id = from_resource_id[0]
-            elif len(from_ingredient_id):
-                from_node = "ingredient"
-                from_id = from_ingredient_id[0]
-            else:
-                # TODO: FIX treatment - should not get here
-                continue
-
-            from_resource_id = [res['resource_id'] for res in structured_recipe['resources'] if
-                                res['name'] == edge['to']]
-            from_ingredient_id = [ing['ingredient_id'] for ing in structured_recipe['ingredients'] if
-                                  ing['name'] == edge['to']]
-            if len(from_resource_id):
-                to_node = "resource"
-                to_id = from_resource_id[0]
-            elif len(from_ingredient_id):
-                to_node = "ingredient"
-                to_id = from_ingredient_id[0]
-            else:
-                # TODO: FIX treatment - should not get here
-                continue
-
-            self.add_resource_ingredient_mapping(dish_id, from_node, from_id, to_node, to_id, edge["instructions"])
+            self.logger.info(f"Adding resource-ingredient mapping: {edge}")
+            self.add_resource_ingredient_mapping(dish_id, edge["from"], edge["to"], edge["instructions"])
 
         self.logger.log(f"Successfully added dish {dish_name} to recipe")
         return structured_recipe

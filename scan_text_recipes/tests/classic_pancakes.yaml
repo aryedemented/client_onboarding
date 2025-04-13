@@ -39,41 +39,41 @@ edges:
 ingredients:
 - name: all-purpose flour
   quantity: 1 cup
-  remarks: ''
+  instructions: ''
 - name: sugar
   quantity: 2 tbsp
-  remarks: ''
+  instructions: ''
 - name: baking powder
   quantity: 1 tsp
-  remarks: ''
+  instructions: ''
 - name: baking soda
   quantity: 1/2 tsp
-  remarks: ''
+  instructions: ''
 - name: salt
   quantity: 1/4 tsp
-  remarks: ''
+  instructions: ''
 - name: buttermilk
   quantity: 3/4 cup
-  remarks: ''
+  instructions: ''
 - name: milk
   quantity: 1/4 cup
-  remarks: ''
+  instructions: ''
 - name: egg
   quantity: 1 large
-  remarks: ''
+  instructions: ''
 - name: melted butter
   quantity: 2 tbsp
-  remarks: ''
+  instructions: ''
 - name: batter
   quantity: combined
-  remarks: mix until just combined
+  instructions: mix until just combined
 resources:
 - name: bowl
   usage_time: 0 min
-  remarks: for mixing ingredients
+  instructions: for mixing ingredients
 - name: greased pan
   usage_time: 0 min
-  remarks: for cooking pancakes
+  instructions: for cooking pancakes
 - name: stove
   usage_time: 0 min
-  remarks: set to medium heat
+  instructions: set to medium heat

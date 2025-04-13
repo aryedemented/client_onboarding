@@ -27,12 +27,13 @@ CATEGORIES:
     - "Other"
 
   quantity_units_enum:
-    - "gr"
+    - "g"
     - "ml"
     - "pieces"
     - "tsp"
     - "tbsp"
     - "decks"
+    - "units"
 
   allergens_types_enum:
     - "Gluten"
@@ -48,6 +49,7 @@ RECIPE_DATABASE:
   # Dish Recipies - main table
   dishes:
     id: "SERIAL PRIMARY KEY"
+    intermediate: "BOOL"
     name: "TEXT NOT NULL UNIQUE CHECK (name <> '')"
     description: "TEXT"
     category_id: "dish_types_enum NOT NULL"
@@ -58,14 +60,14 @@ RECIPE_DATABASE:
     resource_description: "TEXT"
     volume: "FLOAT NOT NULL"
     max_temperature: "FLOAT"
-    capacity_units: "quantity_units_enum NOT NULL"
+#    capacity_units: "quantity_units_enum NOT NULL"
 
   ingredients:
     id: "SERIAL PRIMARY KEY"
     name: "TEXT NOT NULL UNIQUE CHECK (name <> '')"
     ingredient_description: "TEXT"
     category_id: "ingredient_types_enum NOT NULL"
-    units: "quantity_units_enum NOT NULL"
+    units: "quantity_units_enum"
 
   ingredients_allergens:
     id: "SERIAL PRIMARY KEY"
@@ -85,14 +87,13 @@ RECIPE_DATABASE:
     id: "SERIAL PRIMARY KEY"
     dish_id: "INT REFERENCES dishes(id) ON DELETE SET NULL"
     ingredient_id: "INT  REFERENCES ingredients(id) ON DELETE SET NULL"
-    quantity: "FLOAT NOT NULL"
+    quantity: "FLOAT"
+    intermediate: "BOOL"
     instructions: "TEXT"
 
   resource_ingredient_mapping:
     id: "SERIAL PRIMARY KEY"
     dish_id: "INT REFERENCES dishes(id) ON DELETE SET NULL"
-    from_node: "node_type_enum"
-    to_node: "node_type_enum"
     from_id: "INT NOT NULL"
     to_id: "INT NOT NULL"
     instructions: "TEXT"
@@ -107,4 +108,4 @@ CONSTRAINTS:
       ADD CONSTRAINT unique_recipe_resource UNIQUE (dish_id, resource_id, usage_time, temperature, occupancy, instructions);"
   resource_ingredient_mapping:
     - "ALTER TABLE resource_ingredient_mapping
-      ADD CONSTRAINT unique_resource_ingredient_mapping UNIQUE (dish_id, from_node, from_id, to_node, to_id, instructions);"
+      ADD CONSTRAINT unique_resource_ingredient_mapping UNIQUE (dish_id, from_id, to_id);"

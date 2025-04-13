@@ -1,13 +1,15 @@
 import copy
+import os
 from abc import abstractmethod
 from typing import Dict, List
 
+from scan_text_recipes import PROJECT_ROOT
 from scan_text_recipes.src.issues_class_format import SupplementaryPromptQuestion
 from scan_text_recipes.src.postprocessors.recipe_fixers.default_fixers import RecipeFixer
 from scan_text_recipes.tests.examples_for_tests import load_structured_test_recipe, load_unstructured_text_test_recipe, \
     load_test_setup_config
 from scan_text_recipes.utils.logger.basic_logger import Logger
-from scan_text_recipes.utils.utils import list_it, read_yaml
+from scan_text_recipes.utils.utils import list_it, read_yaml, read_text
 
 
 class SupplementaryRecipeFixer(RecipeFixer):
@@ -47,6 +49,7 @@ class SupplementaryRecipeFixer(RecipeFixer):
                             else:
                                 try:
                                     value = float(str(section_field[field_name]))
+                                    section_field[field_name] = value
                                 except ValueError:
                                     pass
                         if not getattr(self.validation_methods[method], 'validate')(value):
@@ -84,12 +87,16 @@ class SupplementaryRecipeFixer(RecipeFixer):
         :return: Refined recipe.
         """
         user_prompts, questions = self.create_questions_user_prompt(recipe_dict, recipe_text)
+        if len(questions) == 0:
+            self.logger.info(f"No issues found in recipe.")
+            return True, recipe_dict
         messages = [
             {"role": "system", "content": self.prompts.system_prompt()},
             {"role": "user", "content": user_prompts},
             {"role": "assistant", "content": self.prompts.assistant_prompt()}
         ]
         res, answers = self.model_interface.get_structured_answer(messages=messages)
+        self.logger.info(f"Model response: {answers}")
         recipe_dict = self.create_updated_recipe_dict(answers, questions, recipe_dict)
         return res, recipe_dict
 
@@ -133,8 +140,12 @@ def ingredients_fixer_test():
         config=client_config,
         **{"model_interface": "RemoteAPIModelInterface", "language": "Hebrew", "setup_config": setup_config, "force_ingredients": True, "force_resources": True}
     )
-    recipe_dict = load_structured_test_recipe()
-    recipe_text = load_unstructured_text_test_recipe()
+    # recipe_dict = load_structured_test_recipe()
+    # recipe_text = load_unstructured_text_test_recipe()
+
+    recipe_text = read_text(os.path.join(PROJECT_ROOT, f"..\\recipes\\italiano\\bruschetta.txt"))
+    recipe_dict = read_yaml(os.path.join(PROJECT_ROOT, f"..\\structured_recipes\\bruschetta.yaml"))
+
     result = recipe_fixer.process_recipe(recipe_dict, recipe_text)
     print(result)
 

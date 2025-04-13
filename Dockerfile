@@ -7,7 +7,7 @@ ENV PYTHONPATH=/ScanRecepies
 WORKDIR /ScanRecepies
 
 # ✅ First: copy just the requirements (caches better)
-COPY scan_text_recipes/requirements.txt .
+COPY requirements.txt .
 
 # ✅ Install deps early (caches unless this file changes)
 RUN pip install --upgrade pip && pip install -r requirements.txt

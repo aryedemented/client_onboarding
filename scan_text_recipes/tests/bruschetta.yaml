@@ -54,74 +54,74 @@ ingredients:
   intermediate: false
   name: עגבניות בשלות
   quantity: 200.0
-  remarks: ''
+  instructions: ''
   units: ''
 - id: 1
   intermediate: false
   name: שום
   quantity: 5.0
-  remarks: ''
+  instructions: ''
   units:
     quantity: g
 - id: 2
   intermediate: false
   name: רסק עגבניות
   quantity: 30.0
-  remarks: ''
+  instructions: ''
   units:
     quantity: g
 - id: 3
   intermediate: false
   name: בזיליקום טרי קצוץ
   quantity: 5.0
-  remarks: ''
+  instructions: ''
   units: ''
 - id: 4
   intermediate: false
   name: אורגנו יבש
   quantity: 1.0
-  remarks: ''
+  instructions: ''
   units:
     quantity: g
 - id: 5
   intermediate: false
   name: גבינה קשה מגוררת
   quantity: 30.0
-  remarks: ''
+  instructions: ''
   units:
     quantity: g
 - id: 6
   intermediate: false
   name: שמן זית
   quantity: 15.0
-  remarks: ''
+  instructions: ''
   units:
     quantity: ml
 - id: 7
   intermediate: false
   name: מלח
   quantity: 3.0
-  remarks: ''
+  instructions: ''
   units:
     quantity: g
 - id: 8
   intermediate: false
   name: בגט/לחם איטלקי עבה
   quantity: 6.0
-  remarks: ''
+  instructions: ''
   units: ''
 - id: 9
   intermediate: true
   name: פרוסות לחם קלויות
   quantity: 6.0
-  remarks: קולים את פרוסות הלחם בתנור שחומם מראש ל־200 מעלות במשך 10 דקות, עד שהן
+  instructions: קולים את פרוסות הלחם בתנור שחומם מראש ל־200 מעלות במשך 10 דקות, עד שהן
     זהובות ופריכות בקצוות
   units: ''
 - id: 10
   intermediate: true
   name: תערובת עגבניות
   quantity: null
-  remarks: מחממים שמן זית במחבת על אש בינונית, מוסיפים שום קצוץ ומטגנים 30 שניות,
+  instructions: מחממים שמן זית במחבת על אש בינונית, מוסיפים שום קצוץ ומטגנים 30 שניות,
     מוסיפים עגבניות קצוצות ורסק עגבניות, מתבלים במלח ואורגנו, מבשלים 5 דקות עד שהרוטב
     מסמיך, מכבים את האש ומוסיפים בזיליקום קצוץ
   units: ''
@@ -129,33 +129,33 @@ ingredients:
   intermediate: true
   name: ברוסקטה מוכנה
   quantity: 6.0
-  remarks: מורחים תערובת עגבניות על פרוסות לחם קלויות, מפזרים גבינה מגוררת, אופים
+  instructions: מורחים תערובת עגבניות על פרוסות לחם קלויות, מפזרים גבינה מגוררת, אופים
     5 דקות עד שהגבינה נמסה ומשחימה בקצוות
   units: ''
 - id: 12
   intermediate: true
   name: מוצר סופי
   quantity: 6.0
-  remarks: מוציאים ומגישים מיד כשהן חמות ופריכות
+  instructions: מוציאים ומגישים מיד כשהן חמות ופריכות
   units: ''
 resources:
 - id: 13
   name: תנור
-  remarks: חימום מראש ל־200 מעלות, אופים פרוסות לחם עד שהן זהובות ופריכות בקצוות
+  instructions: חימום מראש ל־200 מעלות, אופים פרוסות לחם עד שהן זהובות ופריכות בקצוות
   temperature: 200.0
   usage_time: 10.0
 - id: 14
   name: מחבת
-  remarks: מחממים שמן זית על אש בינונית, מוסיפים שום קצוץ ומטגנים, מוסיפים עגבניות
+  instructions: מחממים שמן זית על אש בינונית, מוסיפים שום קצוץ ומטגנים, מוסיפים עגבניות
     ורסק עגבניות, מתבלים ומבשלים עד שהרוטב מסמיך
   temperature: ''
   usage_time: 7.0
 - id: 15
   name: תבנית פיצה
-  remarks: מריחת תערובת עגבניות על פרוסות לחם ופיזור גבינה מגוררת
+  instructions: מריחת תערובת עגבניות על פרוסות לחם ופיזור גבינה מגוררת
   usage_time: 3 דקות
 - id: 16
   name: תנור
-  remarks: אופים את הברוסקטה עד שהגבינה נמסה ומשחימה בקצוות
+  instructions: אופים את הברוסקטה עד שהגבינה נמסה ומשחימה בקצוות
   temperature: 200.0
   usage_time: 5.0

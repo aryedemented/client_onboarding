@@ -23,29 +23,31 @@ PROCESSING_PIPELINE:
   POST_PROCESSORS:
     - GraphRefinement:
         model_interface: {{ model_interface_class }}
-#    - PostProcessorsLoopContainer:
-#        iterations: 1
-#        language: {{ language }}
-#        segment_config:
-#          - RemoveFakeIngredients:
-#          - RemoveFakeResources:
-    - IngredientsSupplementaryFixer:
-        refiner_prompts: SupplementaryRefinerPromptsContainer
-        model_interface: {{ model_interface_class }}
-        config:
-          FIELDS:
-            - quantity:
-              - NotNull
-              - TypeFloat
-    - ResourcesSupplementaryFixer:
-        refiner_prompts: SupplementaryRefinerPromptsContainer
-        model_interface: {{ model_interface_class }}
-        config:
-          FIELDS:
-            - temperature:
-                - TypeFloat
-            - usage_time:
-                - TypeFloat
-    - UnitsTransformer:
     - IngredientsNamesCorrector:
     - ResourcesNamesCorrector:
+    - PostProcessorsLoopContainer:
+        iterations: 2
+        language: {{ language }}
+        segment_config:
+          - IngredientsSupplementaryFixer:
+              refiner_prompts: SupplementaryRefinerPromptsContainer
+              model_interface: {{ model_interface_class }}
+              config:
+                FIELDS:
+                  - quantity:
+                    - TypeFloat
+          - ResourcesSupplementaryFixer:
+              refiner_prompts: SupplementaryRefinerPromptsContainer
+              model_interface: {{ model_interface_class }}
+              config:
+                FIELDS:
+                  - temperature:
+                      - TypeFloat
+          - ResourcesSupplementaryFixer:
+              refiner_prompts: SupplementaryRefinerPromptsContainer
+              model_interface: {{ model_interface_class }}
+              config:
+                FIELDS:
+                  - usage_time:
+                      - TypeFloat
+    - UnitsTransformer:

@@ -25,7 +25,7 @@ class GraphEdgesPromptsContainer(DefaultPromptsContainer):
             Here is the graph: ***\n{recipe_dict}\n***.
             Here is the original text: ***\n{recipe_text}***\n.
             
-            - **Respond only with the updated JSON** Do not add any explanations or remarks.
+            - **Respond only with the updated JSON** Do not add any explanations or instructions.
             - Field names should be in english, but the values should be in the original language of the recipe.
         """
         return refinement_prompt
@@ -38,8 +38,8 @@ class GraphEdgesPromptsContainer(DefaultPromptsContainer):
         return f"""
         Graph Structure:
             - Recipe Graphs provided in format where nodes can be of two kinds: ingredient or resources.
-            - ingredient nodes represent the ingredients used in the recipe. The properties include the name, quantity, and remarks.
-            - resource nodes represent the resources used in the recipe. The properties include the name, preparation time, and remarks.
+            - ingredient nodes represent the ingredients used in the recipe. The properties include the name, quantity, and instructions.
+            - resource nodes represent the resources used in the recipe. The properties include the name, preparation time, and instructions.
             - edges describe the relationship between resources and ingredients.
             - Graph is of a DAG structure, meaning that there are no cycles in the graph.
             - Graph final node named {self.setup_config['FINAL_NODE_NAME']}.

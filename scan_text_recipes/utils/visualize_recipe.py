@@ -12,12 +12,12 @@ def create_recipe_graph(data):
 
     # Add ingredient nodes with tooltips
     for ingredient in data.get("ingredients", []):
-        tooltip_text = ingredient["remarks"]
+        tooltip_text = ingredient["instructions"]
         dot.node(str(ingredient["id"]), label=f"{ingredient['name']}\n{ingredient['quantity']}", shape="ellipse", tooltip=tooltip_text, style="filled", fillcolor="lightgreen")
 
     # Add resource nodes with tooltips
     for resource in data.get("resources", []):
-        tooltip_text = resource["remarks"]
+        tooltip_text = resource["instructions"]
         dot.node(str(resource["id"]), label=f"{resource['name']}\n{resource['usage_time']}", shape="box", tooltip=tooltip_text, style="filled", illcolor="lightblue")
 
     # Add edges with instructions as labels

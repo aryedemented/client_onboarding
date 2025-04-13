@@ -17,7 +17,7 @@ class SupplementaryPromptQuestion:
 
     @property
     def question(self) -> str:
-        return f'What is the {self.field_name} for {self.section} in the recipe in "{self.units}" units?'
+        return f'What is the {self.field_name} for {self.section} in the recipe in {self.units}?'
 
     @property
     def format_text(self) -> str:
@@ -25,4 +25,4 @@ class SupplementaryPromptQuestion:
 
     @property
     def problem(self) -> str:
-        return f'Failed to get {self.field_name} for {self.section} in the recipe in "{self.units}" units.'
+        return f'Failed to get {self.field_name} for {self.section} in the recipe in "{self.units}".'

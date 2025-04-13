@@ -53,12 +53,12 @@ class DefaultPromptsContainer(BasePromptsContainer):
     ### Expected JSON format **be exact with field names**:
     {
         "ingredients": [
-            {"id": 0, "name": "flour", "quantity": "1 cup", "remarks": "instruction on how to use flour, if mentioned in the recipe, else leave blank"},
-            {"id": 1, "name": "sugar", "quantity": "2 tbsp", "remarks": "instruction on how to use sugar, if mentioned in the recipe, else leave blank"},
-            {"id": 2, "name": "dough", "quantity": "combined", "remarks": "instruction on how dough is created, if mentioned in the recipe, else leave blank"},
+            {"id": 0, "name": "flour", "quantity": "1 cup", "instructions": "instruction on how to use flour, if mentioned in the recipe, else leave blank"},
+            {"id": 1, "name": "sugar", "quantity": "2 tbsp", "instructions": "instruction on how to use sugar, if mentioned in the recipe, else leave blank"},
+            {"id": 2, "name": "dough", "quantity": "combined", "instructions": "instruction on how dough is created, if mentioned in the recipe, else leave blank"},
         ],
         "resources": [
-            {"id": 3, "name": "oven", "usage_time": "10 min", "remarks" "instruction on how to bake in the oven, if mentioned in the recipe, else leave blank"},
+            {"id": 3, "name": "oven", "usage_time": "10 min", "instructions" "instruction on how to bake in the oven, if mentioned in the recipe, else leave blank"},
         ],
         "edges": [
             {"from": 0, "to": 3, "instructions": "instruction on how flour is utilized in the dough, if mentioned in the recipe, else leave blank"},

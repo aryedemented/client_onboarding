@@ -86,7 +86,7 @@ def add_ingredient_to_inventory(conn, cur, ingredient: Dict, category_id: str, u
 def add_ingredient_to_recipe(conn, cur, ingredient: Dict, dish_id: int, indredient_id: int):
     query = f"""
             INSERT INTO recipe_ingredients (dish_id, ingredient_id, quantity, instructions) 
-            VALUES ('{dish_id}', '{indredient_id}', '{ingredient["quantity"]}', '{ingredient["remarks"]}') 
+            VALUES ('{dish_id}', '{indredient_id}', '{ingredient["quantity"]}', '{ingredient["instructions"]}') 
             ON CONFLICT (dish_id, ingredient_id, quantity)
             DO NOTHING;
         """
@@ -108,7 +108,7 @@ def add_resource_to_kitchen_setup(conn, cur, resource: Dict, resource_props: Dic
 def add_resource_to_recipe(conn, cur, resource: Dict, dish_id, resource_id):
     query = f"""
             INSERT INTO recipe_resources (dish_id, resource_id, usage_time, temperature, occupancy, instructions) 
-            VALUES ('{dish_id}', '{resource_id}', '{resource["usage_time"]}', '{resource["temperature"]}', '{resource["occupancy"]}', '{resource["remarks"]}') 
+            VALUES ('{dish_id}', '{resource_id}', '{resource["usage_time"]}', '{resource["temperature"]}', '{resource["occupancy"]}', '{resource["instructions"]}') 
             ON CONFLICT (dish_id, resource_id, usage_time, temperature, occupancy, instructions)
             DO NOTHING;
         """
@@ -125,7 +125,7 @@ def add_resource_ingredient_mapping(conn, cur, dish_id: int, from_node: int, fro
     execute_query(conn, cur, query)
 
 
-def insert_dish_into_db(conn, cur, structured_recipe: Dict, text_recipe: str, dish_name: str):
+def insert_recipe_into_db(conn, cur, structured_recipe: Dict, text_recipe: str, dish_name: str):
     # Insert dish into main table
     default_dish_type = "Main Dish"  # for now
     dish_id = insert_dish(conn, cur, description=text_recipe, name=dish_name, dish_type=default_dish_type)
@@ -208,4 +208,4 @@ if __name__ == '__main__':
     text_recipe = read_text(os.path.join(PROJECT_ROOT, "..", "recipes", f"{dish_filename}.txt"))
     structured_recipe = read_yaml(os.path.join(PROJECT_ROOT, "..", "structured_recipes", f"{dish_filename}.yaml"))
 
-    insert_dish_into_db(connection, cursor, structured_recipe, text_recipe=text_recipe, dish_name=dish_name)
+    insert_recipe_into_db(connection, cursor, structured_recipe, text_recipe=text_recipe, dish_name=dish_name)

@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from inspect import isabstract
 from pathlib import Path
 from typing import Dict, List, Dict, Any, Type
@@ -14,6 +15,19 @@ import yaml
 from easydict import EasyDict as easy_dict
 
 from scan_text_recipes.utils.file_utils import dynamic_import_from_packages
+
+
+def remove_special_characters(text_recipe: str) -> str:
+    """
+    Remove special characters, including quotes, from the text recipe.
+    :param text_recipe: Recipe text
+    :return: Cleaned recipe text
+    """
+    # Remove special characters including ' and "
+    text_recipe = re.sub(r'[^\w\s,.:;()\-]', '', text_recipe)
+    # Remove extra spaces
+    text_recipe = re.sub(r'\s+', ' ', text_recipe).strip()
+    return text_recipe
 
 
 def read_yaml(filename: str, **kwargs) -> Dict:
@@ -65,7 +79,7 @@ def read_schema_config() -> Dict:
     """
     # Step 1: Read YAML file as raw text (Jinja placeholders exist)
     yaml_loader = YAML(typ="safe")  # "safe" mode ignores comments
-    with open(os.path.join(PROJECT_ROOT, "config", "db_config.yaml"), "r", encoding="utf-8") as file:
+    with open(os.path.join(PROJECT_ROOT, "config", "db_schema_config.yaml"), "r", encoding="utf-8") as file:
         yaml_data = yaml_loader.load(file)  # ✅ Ignores comments
 
     # Step 2: Extract categorical definitions for Jinja processing

@@ -36,8 +36,8 @@ class LoopContainer:
         for i in range(self._iterations):
             self._logger.info(f"Running iteration {i + 1} of {self._iterations}:")
             res, self.recipe = self._run_loop(self.recipe, **kwargs)
-            if res:
-                self._logger.log(f"Expected result achieved. Stopping the iterations")
-                break
+            # if res:
+            #     self._logger.log(f"Expected result achieved. Stopping the iterations")
+            #     break
         self._logger.log(f"Finished processing the recipe after {self._iterations} iterations.")
         return res, self.recipe

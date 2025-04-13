@@ -12,7 +12,7 @@ from scan_text_recipes import PROJECT_ROOT
 from scan_text_recipes.src.run_pipeline import ReadRecipePipeline
 from scan_text_recipes.uploader_tool.src.recipe_scheduler_utils import build_schedule, plot_schedule
 from scan_text_recipes.uploader_tool.src.st_utils import hebrew_text
-from scan_text_recipes.utils.utils import read_jinja_config
+from scan_text_recipes.utils.utils import read_jinja_config, read_yaml, write_yaml
 
 
 class VisToolUploader:
@@ -53,8 +53,9 @@ class VisToolUploader:
                     print("scanning recipe")
                     if "data" not in st.session_state:
                         st.session_state.data = {}
-                    st.session_state.data['recipe_dict'] = self.parse_recipe()
-                    # self.recipe_dict = read_yaml(os.path.join(PROJECT_ROOT, "..\\structured_recipes\\bruschetta.yaml"))
+                    # self.recipe_dict = self.parse_recipe()
+                    self.recipe_dict = read_yaml(os.path.join(PROJECT_ROOT, f"..\\structured_recipes\\{st.session_state.data['recipe_name']}.yaml"))
+                    # write_yaml(st.session_state.data['recipe_dict'], os.path.join(PROJECT_ROOT, f"..\\structured_recipes\\{st.session_state.data['recipe_name']}.yaml"), encoding='utf-8')
         with self.graph_area:
             print("displaying graph")
             graph = self.build_recipe_graph(self.recipe_dict)
@@ -164,7 +165,7 @@ class VisToolUploader:
         # Run the pipeline on the recipe text
         _, processed_recipe = pipeline.run_pipeline(st.session_state.data['recipe_text'])
         # Save the processed recipe to the database
-        pipeline.save_recipe_to_db(processed_recipe, st.session_state.data['recipe_text'])
+        # pipeline.save_recipe_to_db(processed_recipe, st.session_state.data['recipe_text'], st.session_state.data["recipe_name"])
         return processed_recipe
 
     @staticmethod
@@ -189,13 +190,13 @@ class VisToolUploader:
         # Add all nodes first: ingredients + resources
         for item in recipe_dict.get("ingredients", []):
             graph.add_node(
-                item["id"], label=item["name"], type="ingredient", quantity=item["quantity"], remarks=item["remarks"],
+                item["id"], label=item["name"], type="ingredient", quantity=item["quantity"], instructions=item["instructions"],
                 color='lightblue', size=20, shape='box'
             )
 
         for item in recipe_dict.get("resources", []):
             graph.add_node(
-                item["id"], label=item["name"], type="resource", usage_time=item["usage_time"], remarks=item["remarks"],
+                item["id"], label=item["name"], type="resource", usage_time=item["usage_time"], instructions=item["instructions"],
                 color='lightgreen', size=50, shape='box'
             )
 
