@@ -6,3 +6,6 @@ __pycache__
 *.db
 .env
 aws_env_file
+/scan_text_recipes/config/api_keys.yaml
+/scan_text_recipes/config/db_connect_config.yaml
+/infra/terraform

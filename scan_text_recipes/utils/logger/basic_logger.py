@@ -1,9 +1,12 @@
+import os
 from abc import abstractmethod
 
 
 class BaseLogger:
     def __init__(self, name: str, **kwargs):
         self.name = name
+        self.client_name = os.getenv("CLIENT_NAME")
+        self.dish_name = os.getenv("DISH_NAME")
 
     @abstractmethod
     def log(self, message: str):
@@ -49,16 +52,16 @@ class DummyLogger(BaseLogger):
 
 class Logger(BaseLogger):
     def log(self, message: str):
-        print(f"{self.name}: {message}")
+        print(f"[{self.client_name}/{self.dish_name}]{self.name}: {message}")
 
     def info(self, message: str):
-        print(f"{self.name} [INFO]: {message}")
+        print(f"[{self.client_name}/{self.dish_name}]{self.name} [INFO]: {message}")
 
     def warning(self, message: str):
-        print(f"{self.name} [WARNING]: {message}")
+        print(f"[{self.client_name}/{self.dish_name}]{self.name} [WARNING]: {message}")
 
     def error(self, message: str):
-        print(f"{self.name} [ERROR]: {message}")
+        print(f"[{self.client_name}/{self.dish_name}]{self.name} [ERROR]: {message}")
 
     def critical(self, message: str):
-        print(f"{self.name} [CRITICAL]: {message}")
+        print(f"[{self.client_name}/{self.dish_name}]{self.name} [CRITICAL]: {message}")

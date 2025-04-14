@@ -33,8 +33,6 @@ class ReadRecipePipeline:
     def __init__(
             self,
             client_config_path: str,    # path to the bundle config, user-related config
-            model_api_keys_path: str,   # connect configuration file - connect to model
-            db_connection_config_path: str,  # database connection configuration file
             pipeline_config_path: str = None,  # processing pipeline config, lists of available post, pre and main processors
             model_config_path: str = None,  # LLM properties configuration file
             logger: BaseLogger = None
@@ -56,7 +54,6 @@ class ReadRecipePipeline:
             )
         # Init Model Interface
         self.model_config = read_yaml(model_config_path)
-        self.model_api_keys = read_yaml(model_api_keys_path)
 
         # Init Pipeline
         # Init Preprocessors
@@ -88,7 +85,6 @@ class ReadRecipePipeline:
         # Init Database Connection
         self.db_interface = load_or_create_instance(
             db_interface_config, BaseDatabaseInterface, DB_PACKAGE_PATH,
-            **{'db_connect_config': db_connection_config_path},
             **self.client_pipeline_config
         )
 
@@ -105,7 +101,7 @@ class ReadRecipePipeline:
 
     def run_pipeline(self, recipe_text: str) -> [bool, Dict]:
         """
-        Run the pipeline on the given recipe dictionary and text.
+            Run the pipeline on the given recipe dictionary and text.
         """
         # Run all preprocessor
         original_text = recipe_text
@@ -139,7 +135,8 @@ class ReadRecipePipeline:
         # Save the recipe to the database
         self.db_interface.insert_recipe_into_db(
             structured_recipe=recipe_dict, text_recipe=recipe_text, dish_name=dish_name
-    )
+        )
+        self.logger.log(f"Saved recipe to database: {self.db_interface.__class__.__name__}")
 
     def save_structured_recipe(self, recipe_dict: Dict, dish_name: str) -> None:
         """
@@ -152,8 +149,11 @@ class ReadRecipePipeline:
             local_output_path = f"/tmp/{dish_name}.yaml"
             write_yaml(recipe_dict, local_output_path, encoding="utf-8")
             self.s3_client.upload_file(local_output_path, self.bucket_name, self.output_key)
+            self.logger.log(f"Uploaded structured recipe to S3: {self.bucket_name}/{self.output_key}")
         else:
-            write_yaml(recipe_dict, os.path.join(PROJECT_ROOT, "..", "structured_recipes", f"{dish_name}.yaml"), encoding="utf-8")
+            file_path = os.path.join(PROJECT_ROOT, "..", "structured_recipes", f"{dish_name}.yaml")
+            write_yaml(recipe_dict, file_path, encoding="utf-8")
+            self.logger.log(f"Saved structured recipe to {file_path}")
 
     def load_text_recipe(self, dish_name: str) -> str:
         """
@@ -165,6 +165,7 @@ class ReadRecipePipeline:
             s3.download_file(self.bucket_name, self.input_key, local_input_path)
         else:
             local_input_path = os.path.join(PROJECT_ROOT, "..", "recipes", client_name, f"{dish_name}.txt")
+        self.logger.log("Loading recipe text from {}".format(local_input_path))
         return read_text(local_input_path)
 
 
@@ -174,27 +175,25 @@ if __name__ == '__main__':
     client_name = os.environ.get("CLIENT_NAME")
     client_config = os.path.join(PROJECT_ROOT, "client_configs", client_name, "client_config.yaml")
     db_schema_config = os.path.join(PROJECT_ROOT, "client_configs", client_name, "db_schema_config.yaml")
-    # Model config
-    model_api_keys = os.path.join(PROJECT_ROOT, "config", "api_keys.yaml")
-    # Database config
-    db_connection_config = os.path.join(PROJECT_ROOT, "config", "db_connect_config.yaml")
+    # Dish - related information
+    dish_name = os.environ.get("DISH_NAME")
 
+    # Initialize pipeline
     pipeline = ReadRecipePipeline(
         client_config,
-        model_api_keys,
-        db_connection_config
     )
-    # dish_name = "pizza_italiano"
-    dish_name = "bruschetta"
 
-    loaded_recipe_text = read_text(os.path.join(PROJECT_ROOT, "..", "recipes", client_name, f"{dish_name}.txt"))
+    # Load the recipe text
+    # loaded_recipe_text = read_text(os.path.join(PROJECT_ROOT, "..", "recipes", client_name, f"{dish_name}.txt"))
+    loaded_recipe_text = pipeline.load_text_recipe(dish_name)
+
     # Run the pipeline on the recipe text
     _, processed_recipe = pipeline.run_pipeline(loaded_recipe_text)
     # processed_recipe = read_yaml(os.path.join(PROJECT_ROOT, f"..\\structured_recipes\\{dish_name}.yaml"))
+
     # Save the processed recipe to the database
-    write_yaml(processed_recipe, os.path.join(PROJECT_ROOT, "..", "structured_recipes", f"{dish_name}.yaml"), encoding='utf-8')
+    pipeline.save_structured_recipe(recipe_dict=processed_recipe, dish_name=dish_name)
     pipeline.save_recipe_to_db(recipe_dict=processed_recipe, recipe_text=loaded_recipe_text, dish_name=dish_name)
-    pipeline.save_structured_recipe(recipe_dict=processed_recipe, recipe_text=loaded_recipe_text, dish_name=dish_name)
-    print(processed_recipe)
-    graph = create_recipe_graph(processed_recipe)
-    graph.render(os.path.join(PROJECT_ROOT, "..", "structured_recipes", "tmp"), view=True)  # Saves and opens the graph
+    # print(processed_recipe)
+    # graph = create_recipe_graph(processed_recipe)
+    # graph.render(os.path.join(PROJECT_ROOT, "..", "structured_recipes", "tmp"), view=True)  # Saves and opens the graph

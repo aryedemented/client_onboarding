@@ -17,7 +17,7 @@ class BaseDatabaseInterface:
 class DatabaseInterface(BaseDatabaseInterface):
 
     def __init__(
-            self, db_config: Union[str, Dict], db_connect_config: Union[str, Dict], setup_config: Union[str, Dict],
+            self, db_config: Union[str, Dict], setup_config: Union[str, Dict],
             logger=None, **kwargs
     ):
         self.logger = load_or_create_instance(
@@ -25,7 +25,6 @@ class DatabaseInterface(BaseDatabaseInterface):
         )
         self.db_config = db_config if isinstance(db_config, dict) else read_yaml(db_config)
         self.setup_config = setup_config if isinstance(setup_config, dict) else read_yaml(setup_config)
-        self.db_connect_config = db_connect_config if isinstance(db_connect_config, dict) else read_yaml(db_connect_config)
         self.connection, self.cursor = self.connect_to_db()
 
         # drop tables for debug only
@@ -41,11 +40,11 @@ class DatabaseInterface(BaseDatabaseInterface):
         """
         try:
             conn = psycopg2.connect(
-                dbname=os.environ.get('dbname'),
-                user=os.environ.get('user'),
-                password=os.environ.get('password'),
+                dbname=os.environ.get('DB_NAME'),
+                user=os.environ.get('DB_USER'),
+                password=os.environ.get('DB_PASS'),
                 host=os.environ.get("DB_HOST"),
-                port=os.environ.get('port')
+                port=os.environ.get('DB_PORT')
             )
             cur = conn.cursor()
             self.logger.log("Database connection established.")

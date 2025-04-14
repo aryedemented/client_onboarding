@@ -148,12 +148,9 @@ class VisToolUploader:
         # Model config
         model_api_keys = os.path.join(PROJECT_ROOT, "config", "api_keys.yaml")
         # Database config
-        db_connection_config = os.path.join(PROJECT_ROOT, "config", "db_connect_config.yaml")
         log_lines = []
         pipeline = ReadRecipePipeline(
             self.bundle_config_path,
-            model_api_keys,
-            db_connection_config,
             **{"logger":
                    {
                        "StreamlitLogger": {

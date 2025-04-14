@@ -52,11 +52,6 @@ def clean_json_output(text):
     return txt
 
 
-def read_config() -> Dict:
-    keys_dict = read_yaml(os.path.join(PROJECT_ROOT, "config", "db_connect_config.yaml"))
-    return easy_dict(keys_dict)
-
-
 def read_model_config() -> Dict:
     keys_dict = read_yaml(os.path.join(PROJECT_ROOT, "config", "model_config.yaml"))
     current_model = keys_dict['CURRENT_MODEL']
@@ -128,11 +123,6 @@ def read_text(filename) -> str:
     with open(filename, "r", encoding="utf-8") as file:
         content = file.read()
     return content
-
-
-# Connect using psycopg2
-def get_connection(db_connect_config):
-    return psycopg2.connect(**db_connect_config)
 
 
 def execute_query(connection, cursor, query, *args, **kwargs):
