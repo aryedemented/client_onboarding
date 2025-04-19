@@ -53,8 +53,8 @@ class VisToolUploader:
                     print("scanning recipe")
                     if "data" not in st.session_state:
                         st.session_state.data = {}
-                    # self.recipe_dict = self.parse_recipe()
-                    self.recipe_dict = read_yaml(os.path.join(PROJECT_ROOT, f"..\\structured_recipes\\{st.session_state.data['recipe_name']}.yaml"))
+                    self.recipe_dict = self.parse_recipe()
+                    # self.recipe_dict = read_yaml(os.path.join(PROJECT_ROOT, f"..\\structured_recipes\\{st.session_state.data['recipe_name']}.yaml"))
                     # write_yaml(st.session_state.data['recipe_dict'], os.path.join(PROJECT_ROOT, f"..\\structured_recipes\\{st.session_state.data['recipe_name']}.yaml"), encoding='utf-8')
         with self.graph_area:
             print("displaying graph")

@@ -26,3 +26,11 @@ __pycache__/
 /scan_text_recipes/uploader_tool/src/lib/
 .env
 aws_env_file
+
+# Terraform system files
+/infra/terraform/.terraform/*
+/infra/terraform/*.tfstate
+/infra/terraform/*.tfstate.backup
+/infra/terraform/.terraform.tfstate.lock.info
+/infra/terraform/.terraform.lock.hcl
+
