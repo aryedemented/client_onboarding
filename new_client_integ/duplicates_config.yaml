@@ -1,0 +1,26 @@
+DATA_LOADER:
+  - CSVDataLoader:
+      config:
+        filter_by:
+          "מוצר בסיס/ חומר גלם": "חומר גלם"
+        name_column: "שם הרכיב"
+
+PRE_CLASSIFIER:
+  - EmbeddingClassifier:
+      config:
+        THRESHOLD: 0.85
+        embedding_params:
+          MODEL_NAME: "avichr/heBERT"
+          PCA: True
+          PCA_COMPONENTS: 50
+
+REFINERS:
+  - StanzaRefiner:
+      config:
+        THRESHOLD: 0.8
+        embedding_params:
+          MODEL_NAME: "avichr/heBERT"
+          PCA: False
+        refiner_params:
+          language: "he"
+          model: "stanza"

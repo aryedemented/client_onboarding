@@ -1,0 +1,8 @@
+DATA_LOADER:
+  - CSVDataLoader:
+      config:
+        filter_by:
+          "מוצר בסיס/ חומר גלם": "חומר גלם"
+        name_column: "שם הרכיב"
+
+MATCHER:

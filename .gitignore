@@ -33,4 +33,4 @@ aws_env_file
 /infra/terraform/*.tfstate.backup
 /infra/terraform/.terraform.tfstate.lock.info
 /infra/terraform/.terraform.lock.hcl
-
+/infra/terraform/terraform.tfvars
