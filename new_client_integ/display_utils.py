@@ -51,3 +51,42 @@ def surf_similarity_matrix(similarity_matrix):
 
     plt.show()
 
+
+def roc_curve_display(similarity_matrix):
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from sklearn.metrics import roc_curve, auc
+
+    # Example: assume you already have your similarity matrix
+    # similarity_matrix = np.array([...])
+
+    # Optionally, mask the diagonal
+    np.fill_diagonal(similarity_matrix, 0)
+
+    # Flatten the upper triangle only to avoid duplicates (matrix is symmetric)
+    triu_indices = np.triu_indices_from(similarity_matrix, k=1)
+    similarity_scores = similarity_matrix[triu_indices]
+
+    # Build a pseudo ground truth
+    # For now, let's assume that very high similarity (> 0.8) is "true"
+    # (You can adjust this or use your own labels if you have)
+    true_labels = (similarity_scores > 0.8).astype(int)
+
+    # Plot ROC
+    fpr, tpr, thresholds = roc_curve(true_labels, similarity_scores)
+    roc_auc = auc(fpr, tpr)
+
+    plt.figure(figsize=(8, 6))
+    plt.plot(fpr, tpr, label=f"ROC curve (AUC = {roc_auc:.2f})")
+    plt.plot([0, 1], [0, 1], 'k--', label='Random guess')
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('ROC Curve from Similarity Matrix')
+    plt.legend(loc='lower right')
+    plt.grid()
+    plt.show()
+
+    # Optional: Find the optimal threshold
+    optimal_idx = np.argmax(tpr - fpr)
+    optimal_threshold = thresholds[optimal_idx]
+    print(f"Optimal threshold: {optimal_threshold:.2f}")

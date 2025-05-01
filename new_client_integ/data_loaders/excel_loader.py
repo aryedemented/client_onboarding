@@ -1,6 +1,7 @@
+import numpy as np
 import pandas as pd
 
-from new_client_integ.utils import select_rows_by_dict
+from new_client_integ.utils import select_rows_by_dict, clean_text
 
 
 class BaseDataLoader:
@@ -27,6 +28,23 @@ class CSVDataLoader(BaseDataLoader):
         items_list = [item.strip() for item in items_list]
         items_list = list(set(items_list))
         return items_list
+
+
+class CSVListLoader(BaseDataLoader):
+    def __init__(self, config):
+        super().__init__(config)
+
+    def load(self, file_path):
+        """
+        Load a single column list from csv file.
+        :param file_path:
+        :return:
+        """
+        inventory_items = pd.read_csv(file_path, index_col=False)
+        inventory_items = inventory_items.T.iloc[0]
+        inventory_items = [clean_text(item) for item in list(inventory_items)]
+        inventory_items = np.unique(inventory_items).tolist()
+        return inventory_items
 
 
 if __name__ == '__main__':

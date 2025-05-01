@@ -2,11 +2,10 @@ from abc import abstractmethod
 from typing import List, Dict, Tuple
 
 import numpy as np
-import stanza
-from sklearn.preprocessing import normalize
 from sklearn.metrics.pairwise import cosine_similarity
 
 from new_client_integ.pre_classifiers.pre_classifier import EmbeddingClassifier
+from new_client_integ.utils import clean_text
 
 
 class BaseRefiner:
@@ -24,7 +23,7 @@ class BaseRefiner:
         # Placeholder for actual model loading logic
         pass
 
-    def refine(self, data: List[Tuple[str, str, float, int, int]]) -> List[Tuple[str, str, float, int, int]]:
+    def refine(self, data: List[Tuple[str, str, float, int, int]], emb_dict: Dict = None) -> List[Tuple[str, str, float, int, int]]:
         """
         # Perform some refinement on the data using the model
         refined_data = self.refiner_model.refine(data)
@@ -34,67 +33,74 @@ class BaseRefiner:
         return data
 
 
-class StanzaRefiner(BaseRefiner, EmbeddingClassifier):
-    def __init__(self, config: Dict):
+class MinimalSimilarityRefiner(BaseRefiner, EmbeddingClassifier):
+    def __init__(self, config: Dict, lemmatization_model=None):
         BaseRefiner.__init__(self, config)
-        EmbeddingClassifier.__init__(self, config)
-        stanza.download(self.config["refiner_params"]['language'])  # First time only
+        EmbeddingClassifier.__init__(
+            self, config, device='cpu', use_cache=False
+        )
+        self.apply_lemmatization = True if lemmatization_model else False
+        self.lemmatization_model = lemmatization_model
 
     def load_refiner_model(self):
         """
         Load the refiner model based on the configuration.
         """
-        self.refiner_model = stanza.Pipeline(self.config["refiner_params"]['language'])
+        pass
 
-    def refine(self, data: List[Tuple[str, str, float, int, int]]) -> List[Tuple[str, str, float, int, int]]:
+    @staticmethod
+    def split_words(phrase: str) -> List[str]:
         """
-        Reduces given possible pairs list by splitting the phrase on root and secondary parts,
-        embedding and comparing both parts separately. Finally, selecting the secondary similarity score
-        only if it is higher than the root part
-        :param data:
-        :return:
+        Splits the phrase into words.
+        """
+        return [clean_text(word) for word in phrase.split()]
+
+    def refine(self, data: List[Tuple[str, str, float, int, int]], emb_dict: Dict = None) -> List[Tuple[str, str, float, int, int]]:
+        """
+        Refine the data based on similarity scores.
         """
         items = []
         for pair in data:
             # Assuming pair is a tuple of (score, ing1, ing2, index1, index2)
             ing1, ing2, _, idx1, idx2 = pair
-            ing1_doc = self.refiner_model(ing1)
-            inj1_words = self.split_by_head(ing1_doc)
-            ing2_doc = self.refiner_model(ing2)
-            inj2_words = self.split_by_head(ing2_doc)
-            new_score = self.gen_score(inj1_words, inj2_words)
+            inj1_words = self.split_words(ing1)
+            inj2_words = self.split_words(ing2)
+            new_score = self.gen_score(inj1_words, inj2_words, emb_dict)
             items.append((ing1, ing2, new_score, idx1, idx2))
         # Sort threshold
         items = [item for item in items if item[2] > self.config["THRESHOLD"]]
         return items
 
-    def gen_score(self, ing1_words: List[str], ing2_words: List[str]) -> float:
+    def get_embedding(self, words: List[str], emb_dict: Dict, apply_lemmatization: bool = False) -> np.ndarray:
         """
-        Generate a score based on the similarity of the words in the phrases.
+        Get the embedding for the words using the provided embedding dictionary.
         """
-        scores = []
-        if ing1_words[0] != ing1_words[0]:
-            scores.append(self.embed_ingredients([ing1_words[0], ing2_words[0]]))
+        if emb_dict is None:
+            raise ValueError("Embedding dictionary is required.")
+        if apply_lemmatization:
+            words = [self.refiner_model(word).lemma for word in words]
+        return np.array([emb_dict[word] for word in words])
+
+    def gen_score(self, ing1_words: List[str], ing2_words: List[str], emb_dict: Dict = None) -> float:
+        """
+        Generate a score based on the minimal similarity score of the words in the phrases.
+        """
+        # Assuming self.similarity_matrix is already computed
+        if emb_dict is None:
+            embed1 = self.embed_ingredients(tuple(ing1_words))
+            embed2 = self.embed_ingredients(tuple(ing2_words))
         else:
-            scores = [1.0]
-        if len(ing1_words[1]) > 0 and len(ing2_words[1]) > 0:
-            embeddings = self.embed_ingredients([" ".join(ing1_words[1]), " ".join(ing2_words[1])])
-            embeddings = normalize(embeddings)
-            sim_matrix = cosine_similarity(embeddings)
-            scores.append(sim_matrix[0][1])  # similarity between the two phrases
-            return scores[1] if scores[1] < scores[0] else scores[0]  # return the minimum score
-        else:
-            return 1.0  # only one word in the phrase in one of the phrases - let user decide
+            embed1 = self.get_embedding(ing1_words, emb_dict, self.apply_lemmatization)
+            embed2 = self.get_embedding(ing2_words, emb_dict, self.apply_lemmatization)
+
+        similarity_matrix = cosine_similarity(embed1, embed2)
+        return self.minimal_of_maximal_similarity_full(similarity_matrix)
 
     @staticmethod
-    def split_by_head(phrase) -> [str, List[str]]:
-        """
-        Splits the phrase by the head word.
-        """
-        # find root word
-        noun = [word.lemma for sent in phrase.sentences for word in sent.words if word.head == 0][0]
-        adjs = [word.lemma for sent in phrase.sentences for word in sent.words if word.head > 0]
-        return noun, adjs
+    def minimal_of_maximal_similarity_full(similarity_matrix):
+        max_per_row = similarity_matrix.max(axis=1)  # Best match in B for each word in A
+        max_per_col = similarity_matrix.max(axis=0)  # Best match in A for each word in B
+        return min(max_per_row.min(), max_per_col.min())  # The overall worst matching
 
 
 if __name__ == '__main__':
@@ -114,11 +120,12 @@ if __name__ == '__main__':
 
     # Example configuration
     cfg = {
+        "trust_description": True,
         "THRESHOLD": 0.8,
         "embedding_params": {"MODEL_NAME": "avichr/heBERT", "PCA": False},
         "refiner_params": {'language': 'he', 'model': 'stanza'}
     }
-    refiner = StanzaRefiner(cfg)
+    refiner = MinimalSimilarityRefiner(cfg)
     similar_pairs = refiner.refine(similar_pairs)
     for ing1, ing2, score, _, _ in similar_pairs:
         print(f"{ing1} <-> {ing2}: {score:.2f}")

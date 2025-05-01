@@ -5,11 +5,18 @@ from scan_text_recipes.utils.utils import initialize_pipeline_segments, read_yam
 
 
 class FindMatches:
+
     def __init__(self, cfg):
         self.config = cfg
-        self.data_loader = initialize_pipeline_segments(
+        self.inventory_data_loader = initialize_pipeline_segments(
             package_path=LOADER_PACKAGE_PATH,
-            segment_config=self.config['DATA_LOADER'],
+            segment_config=self.config['INVENTORY_DATA_LOADER'],
+            class_type=BaseDataLoader,
+        )[0]
+
+        self.client_data_loader = initialize_pipeline_segments(
+            package_path=LOADER_PACKAGE_PATH,
+            segment_config=self.config['CLIENT_DATA_LOADER'],
             class_type=BaseDataLoader,
         )[0]
 
@@ -22,8 +29,8 @@ class FindMatches:
     def find_matches(self, client, inventory):
         # Placeholder for actual duplicate finding logic
         # Load data
-        inventory_items_list = self.data_loader.load(inventory)
-        client_items_list = self.data_loader.load(client)
+        inventory_items_list = self.inventory_data_loader.load(inventory)
+        client_items_list = self.client_data_loader.load(client)
         # Preprocess data
         item_pairs = self.matcher.match(client=client_items_list, inventory=inventory_items_list)
 

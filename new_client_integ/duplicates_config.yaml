@@ -1,9 +1,17 @@
+lemmatization:
+    enabled: False
+    language: "he"  # applicable if apply_lemmatization is True
+use_word_embeddings: True
+PCA: True # PCA for word embeddings - only if use_word_embeddings is True
+PCA_COMPONENTS: 100  # PCA components for word embeddings - only if use_word_embeddings is True
 DATA_LOADER:
-  - CSVDataLoader:
+#  - CSVDataLoader:
+#      config:
+#        filter_by:
+#          "מוצר בסיס/ חומר גלם": "חומר גלם"
+#        name_column: "שם הרכיב"
+  - CSVListLoader:
       config:
-        filter_by:
-          "מוצר בסיס/ חומר גלם": "חומר גלם"
-        name_column: "שם הרכיב"
 
 PRE_CLASSIFIER:
   - EmbeddingClassifier:
@@ -15,12 +23,9 @@ PRE_CLASSIFIER:
           PCA_COMPONENTS: 50
 
 REFINERS:
-  - StanzaRefiner:
+  - MinimalSimilarityRefiner:
       config:
-        THRESHOLD: 0.8
+        THRESHOLD: 0.7
         embedding_params:
           MODEL_NAME: "avichr/heBERT"
           PCA: False
-        refiner_params:
-          language: "he"
-          model: "stanza"

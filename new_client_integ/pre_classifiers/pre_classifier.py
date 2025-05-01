@@ -1,12 +1,10 @@
 from typing import Tuple, List, Dict
 
-import numpy as np
 import torch
 import torch.nn.functional as F
-from sklearn.decomposition import PCA
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.preprocessing import normalize
 from transformers import AutoTokenizer, AutoModel
+
+from new_client_integ.utils import conditional_cache
 
 
 class BaseClassifier:
@@ -25,21 +23,30 @@ class PairCandidateGenerator(BaseClassifier):
         self.config = config
 
     @staticmethod
-    def get_similar_pairs(sim_matrix, ing_names, threshold=0.8):
+    def get_similar_pairs(sim_matrix: torch.Tensor, ing_names: List[str], threshold=0.8):
         """
-        Given a similarity matrix and a threshold, returns a list of tuples with similar pairs and their similarity scores.
-        :param sim_matrix:
-        :param ing_names:
-        :param threshold:
-        :return:
+        GPU-optimized: Given a similarity matrix and a threshold,
+        returns a list of tuples with similar pairs and their similarity scores.
         """
-        sim_pairs = []
+        # Step 1: Create mask of where similarity is above threshold
+        mask = (sim_matrix > threshold)
 
-        N = sim_matrix.shape[0]
-        for i in range(N):
-            for j in range(i + 1, N):  # only upper triangle to avoid duplicates and diagonal
-                if sim_matrix[i, j] > threshold:
-                    sim_pairs.append((ing_names[i], ing_names[j], sim_matrix[i, j], i, j))
+        # Step 2: Only take upper triangle (no duplicate pairs, no self-matches)
+        triu_mask = torch.triu(mask, diagonal=1)  # Only take upper triangle without diagonal
+
+        # Step 3: Find (i, j) indices where condition is met
+        idx_i, idx_j = torch.nonzero(triu_mask, as_tuple=True)
+
+        # Step 4: Gather the corresponding similarity scores
+        scores = sim_matrix[idx_i, idx_j]
+
+        # Step 5: Build the list
+        sim_pairs = []
+        for k in range(len(scores)):
+            i = int(idx_i[k])
+            j = int(idx_j[k])
+            sim_pairs.append((ing_names[i], ing_names[j], float(scores[k]), i, j))
+
         return sim_pairs
 
     def classify(self, items: List[str], **kwargs) -> List[Tuple[str, str]]:
@@ -47,10 +54,12 @@ class PairCandidateGenerator(BaseClassifier):
 
 
 class EmbeddingClassifier(PairCandidateGenerator):
-    def __init__(self, config):
+    def __init__(self, config, device: str = 'cuda', use_cache: bool = True):
         super().__init__(config=config)
+        self.device = 'cuda' if torch.cuda.is_available() and device == 'cuda' else 'cpu'
         self.embedding_model = None
         self.tokenizer = None
+        self._use_cache = use_cache
         self.load_embedding_model()
 
     def load_embedding_model(self):
@@ -61,14 +70,31 @@ class EmbeddingClassifier(PairCandidateGenerator):
         if self.embedding_model is None:
             self.tokenizer = AutoTokenizer.from_pretrained(self.config["embedding_params"]["MODEL_NAME"])
             self.embedding_model = AutoModel.from_pretrained(self.config["embedding_params"]["MODEL_NAME"])
+            print(f"{self.__class__.__name__}: Using device: ", self.device)
+            self.embedding_model = self.embedding_model.to(self.device)
 
-    def embed_ingredients(self, items: List[str]) -> torch.Tensor:
+    def embed_ingredients(self, items: Tuple[str]) -> torch.Tensor:
         """
         Given a list of items, returns their embeddings.
-        :param items:
-        :return:
+        """
+        if self._use_cache:
+            return self._cached_embed_ingredients(items)
+        else:
+            return self._unchached_embed_ingredients(items)
+
+    @conditional_cache(maxsize=3)
+    def _cached_embed_ingredients(self, items: Tuple[str]) -> torch.Tensor:
+        return self._embed_ingredients(items)
+
+    def _unchached_embed_ingredients(self, items: Tuple[str]) -> torch.Tensor:
+        return self._embed_ingredients(items)
+
+    def _embed_ingredients(self, items: Tuple[str]) -> torch.Tensor:
+        """
+        Given a list of items, returns their embeddings.
         """
         inputs = self.tokenizer(items, padding=True, truncation=True, return_tensors="pt", max_length=128)
+        inputs = {k: v.to(self.device) for k, v in inputs.items()}  # move tokenized inputs to model's device
         with torch.no_grad():
             outputs = self.embedding_model(**inputs)
             embeddings = outputs.last_hidden_state
@@ -79,20 +105,41 @@ class EmbeddingClassifier(PairCandidateGenerator):
             mean_pooled = summed / counts
         return F.normalize(mean_pooled, p=2, dim=1)
 
+    @staticmethod
+    def torch_pca(in_tnsor: torch.Tensor, n_components: int):
+        """
+        Fast PCA on GPU using PyTorch SVD.
+        X: Tensor of shape (n_samples, n_features)
+        """
+        X_mean = in_tnsor.mean(dim=0, keepdim=True)
+        print(f"X_mean on: {X_mean.device}")
+        X_centered = in_tnsor - X_mean
+        U, S, Vh = torch.linalg.svd(X_centered, full_matrices=False)
+        return torch.matmul(X_centered, Vh[:n_components].T)
+
     def classify(self, items: List[str], **kwargs) -> List[Tuple[str, str, float, int, int]]:
         """
         Given a list of items, returns a list of tuples with similar pairs and their similarity scores.
-        Each tuple contains (item1, item2, score, index1, index2).
-        which are item1 name, item2 name, match score, item index1, item index2
+        Each tuple contains (item1, item2, score, index1, index2)
         """
-        embeddings = self.embed_ingredients(items)
+        embeddings = self.embed_ingredients(tuple(items))  # normalized embeddings on GPU
+
+        # Optionally apply PCA
         if self.config["embedding_params"].get("PCA", True):
-            pca = PCA(n_components=self.config["embedding_params"].get("PCA_COMPONENTS", 50))
-            reduced = pca.fit_transform(embeddings)
-            embeddings = normalize(reduced)
-        self.similarity_matrix = cosine_similarity(embeddings)
-        np.fill_diagonal(self.similarity_matrix, 0)
-        sim_pairs = self.get_similar_pairs(self.similarity_matrix, items, threshold=self.config["THRESHOLD"])
+            n_components = self.config["embedding_params"].get("PCA_COMPONENTS", 50)
+            embeddings = self.torch_pca(embeddings, n_components)
+            print(f"embeddings post-pca on: {embeddings.device}")
+            embeddings = F.normalize(embeddings, p=2, dim=1)
+            print(f"embeddings post-normalization on: {embeddings.device}")
+
+        # Compute full cosine similarity matrix on GPU
+        similarity_matrix = torch.matmul(embeddings, embeddings.T)  # (N, D) @ (D, N) = (N, N)
+        print(f"similarity_matrix on: {similarity_matrix.device}")
+
+        # Fill diagonal with 0 (so an item won't match itself)
+        similarity_matrix.fill_diagonal_(0)
+
+        sim_pairs = self.get_similar_pairs(similarity_matrix, items, threshold=self.config["THRESHOLD"])
         return sim_pairs
 
 

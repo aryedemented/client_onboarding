@@ -1,4 +1,11 @@
-DATA_LOADER:
+INVENTORY_DATA_LOADER:
+  - CSVDataLoader:
+      config:
+        filter_by:
+          "מוצר בסיס/ חומר גלם": "חומר גלם"
+        name_column: "שם הרכיב"
+
+CLIENT_DATA_LOADER:
   - CSVDataLoader:
       config:
         filter_by:
@@ -6,3 +13,5 @@ DATA_LOADER:
         name_column: "שם הרכיב"
 
 MATCHER:
+  - CosineSimilarityMatcher:
+      threshold: 0.8
