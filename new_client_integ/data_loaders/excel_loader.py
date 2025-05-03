@@ -41,7 +41,7 @@ class CSVListLoader(BaseDataLoader):
         :param file_path:
         :return:
         """
-        inventory_items = pd.read_csv(file_path, index_col=False)
+        inventory_items = pd.read_csv(file_path, index_col=False, encoding="utf-8")
         inventory_items = inventory_items.T.iloc[0]
         inventory_items = [clean_text(item) for item in list(inventory_items)]
         inventory_items = np.unique(inventory_items).tolist()

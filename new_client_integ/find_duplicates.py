@@ -19,9 +19,15 @@ class FindDuplicates:
 
     def __init__(self, cfg):
         self.config = cfg
+        self.data_loader = None
+        self.pre_classifier = None
+        self.fine_tuners = None
+        self.load_pipeline(self.config)
+
+    def load_pipeline(self, config):
         self.data_loader = initialize_pipeline_segments(
             package_path=LOADER_PACKAGE_PATH,
-            segment_config=self.config['DATA_LOADER'],
+            segment_config=config['DATA_LOADER'],
             class_type=BaseDataLoader,
         )
         if len(self.data_loader) > 0:  # possible to load dataloader later
@@ -29,13 +35,13 @@ class FindDuplicates:
 
         self.pre_classifier = initialize_pipeline_segments(
             package_path=PRE_CLASSIFIERS_PATH,
-            segment_config=self.config['PRE_CLASSIFIER'],
+            segment_config=config['PRE_CLASSIFIER'],
             class_type=BaseClassifier,
         )[0]
 
         self.fine_tuners = initialize_pipeline_segments(
             package_path=REFINERS_PATH,
-            segment_config=self.config['REFINERS'] if self.config['REFINERS'] else [],
+            segment_config=config['REFINERS'] if config['REFINERS'] else [],
             class_type=BaseRefiner,
         )
         self.load_lemmatization_model()

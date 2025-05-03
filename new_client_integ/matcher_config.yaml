@@ -1,9 +1,7 @@
-INVENTORY_DATA_LOADER:
-  - CSVDataLoader:
-      config:
-        filter_by:
-          "מוצר בסיס/ חומר גלם": "חומר גלם"
-        name_column: "שם הרכיב"
+embedding_params:
+  MODEL_NAME: "avichr/heBERT"
+  PCA: True
+  PCA_COMPONENTS: 50
 
 CLIENT_DATA_LOADER:
   - CSVDataLoader:
@@ -11,6 +9,15 @@ CLIENT_DATA_LOADER:
         filter_by:
           "מוצר בסיס/ חומר גלם": "חומר גלם"
         name_column: "שם הרכיב"
+
+CLASSIFIER_PARAMS:
+    config:
+      THRESHOLD: 0.85
+      embedding_params:
+        MODEL_NAME: "avichr/heBERT"
+        PCA: True
+        PCA_COMPONENTS: 50
+
 
 MATCHER:
   - CosineSimilarityMatcher:
