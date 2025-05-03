@@ -1,8 +1,11 @@
+import os
 import streamlit as st
 import pandas as pd
-
 from new_client_integ.find_duplicates import FindDuplicates
+from new_client_integ.data_loaders.excel_loader import CSVDataLoader
 from scan_text_recipes.utils.utils import read_yaml
+
+os.environ["STREAMLIT_WATCHER_TYPE"] = "none"
 
 
 class DuplicatesPage:
@@ -10,96 +13,184 @@ class DuplicatesPage:
         self.title = "Resolve Duplicates"
         st.set_page_config(layout="wide")
 
-    def process_client_data(self, file_path):
-        config = read_yaml(
-            "D:\\Projects\\Kaufmann_and_Co\\recepies\\scan_code\\ScanRecepies\\new_client_integ\\duplicates_config.yaml")
-        # file_path = "D:\\Projects\\Kaufmann_and_Co\\ingredients_matching\\new_client.csv"
-        find_duplicates = FindDuplicates(cfg=config)
-        possible_replacements = find_duplicates.find_duplicates(filename=file_path)
-        pairs = pd.DataFrame(possible_replacements, columns=["ing1", "ing2"])
+    @staticmethod
+    def init_state():
+        defaults = {
+            "df": None,
+            "columns": [],
+            "name_column": None,
+            "filter_config": {},
+            "filter_count": 0,
+            "active_filter_col": None,
+            "adding_filter": False,
+            "rows": [],
+            "resolved": [],
+            "undo_buffer": [],
+            "full_config": {},
+            "loaded_file": None,
+            "duplicates_ready": False,
+            "show_filtered": False,
+        }
+        for k, v in defaults.items():
+            if k not in st.session_state:
+                st.session_state[k] = v
 
-    def render(self):
-        st.title(self.title)
+    def reset_state(self):
+        for key in ["df", "columns", "name_column", "filter_config", "filter_count",
+                    "active_filter_col", "adding_filter", "rows", "resolved", "undo_buffer",
+                    "full_config", "loaded_file"]:
+            st.session_state[key] = [] if isinstance(st.session_state.get(key), list) else None
+        st.rerun()
 
-        # 🔄 Initialize session state ONCE
-        for key in ['rows', 'resolved', 'undo_buffer']:
-            if key not in st.session_state:
-                st.session_state[key] = []
-
-        upload_col, count_col = st.columns([1, 1])
-        with upload_col:
-            st.write("Upload CSV to resolve duplicates")
-            uploaded_file = st.file_uploader("Load Client List", type=["csv"])
-            if uploaded_file and len(st.session_state.resolved) == 0:
+    def load_file_and_configure(self):
+        st.header("📦 Upload and Filter Client Inventory")
+        col_upload, col_reset = st.columns([1, 1])
+        with col_upload:
+            uploaded_file = st.file_uploader("Upload CSV", type=["csv"], key="file_upload")
+            if uploaded_file and st.session_state.df is None:
                 df = pd.read_csv(uploaded_file)
-                st.session_state.rows = df.to_dict(orient="records")
+                df = df.loc[:, ~df.columns.str.startswith("Unnamed")]
+                st.session_state.df = df
+                st.session_state.columns = df.columns.tolist()
+                st.session_state.loaded_file = uploaded_file
+                st.success("✅ File loaded.")
+        with col_reset:
+            st.write("")
+            st.write("")
+            if st.button("🔄 Reset", key="reset_button"):
+                self.reset_state()
+
+        # Select item name column
+        if st.session_state.df is not None and st.session_state.name_column is None:
+            options = ["-- Select name column --"] + st.session_state.columns
+            choice = st.selectbox("Select item name column", options)
+            if choice != "-- Select name column --":
+                st.session_state.name_column = choice
+
+        if st.session_state.name_column:
+            st.write("✅ Selected column:", st.session_state.name_column)
+
+        # Add filters
+        if st.session_state.name_column and st.button("➕ Add Filter", key="add_filter_button"):
+            st.session_state.adding_filter = True
+
+        if st.session_state.adding_filter:
+            col_options = ["-- Select filter column --"] + st.session_state.columns
+            selected_col = st.selectbox("Choose filter column", col_options, key="new_filter_col")
+            if selected_col != "-- Select filter column --":
+                st.session_state.active_filter_col = selected_col
+                values = st.session_state.df[selected_col].dropna().unique().tolist()
+                selected_val = st.selectbox(f"Choose value for {selected_col}", ["-- Select --"] + values, key=f"val_{selected_col}")
+                if selected_val != "-- Select --":
+                    st.session_state.filter_config[selected_col] = selected_val
+                    st.session_state.filter_count += 1
+                    st.session_state.adding_filter = False
+                    st.session_state.active_filter_col = None
+                    st.rerun()
+
+        if st.session_state.filter_config:
+            st.write("Active filters:")
+            df = pd.DataFrame.from_dict(st.session_state.filter_config, orient="index", columns=["Value"])
+            st.dataframe(df)
+
+        # Finalize filtering
+        # Finalize filtering
+        if st.session_state.name_column and st.button("🔄 Show Filtered Items"):
+            config = {
+                "name_column": st.session_state.name_column,
+                "filter_by": st.session_state.filter_config
+            }
+            st.session_state.full_config = config
+            st.session_state.show_filtered = True
+            st.rerun()
+
+        # Show filtered items if requested
+        if st.session_state.get("show_filtered", False):
+            st.subheader("🧾 Filtered Items")
+            loader = CSVDataLoader(st.session_state.full_config)
+            items = loader.load(self.rewind_st_loaded_file())
+            st.session_state.filtered_items = items
+            st.write(f"✅ Found {len(items)} unique items")
+            st.dataframe(pd.DataFrame(items, columns=["Item Name"]))
+
+            # Now show "Find Duplicates" button
+            if st.button("🔍 Find Duplicates"):
+                dup_config = read_yaml(
+                    "D:\\Projects\\Kaufmann_and_Co\\recepies\\scan_code\\ScanRecepies\\new_client_integ\\duplicates_config.yaml")
+                find_duplicates = FindDuplicates(cfg=dup_config)
+                find_duplicates.set_data_loader(loader)
+
+                duplicates = find_duplicates.find_duplicates(filename=self.rewind_st_loaded_file())
+                pairs_df = pd.DataFrame(duplicates, columns=["left_name", "right_name", "score", "index1", "index2"])
+                st.session_state.rows = pairs_df.to_dict(orient="records")
                 st.session_state.resolved = []
                 st.session_state.undo_buffer = []
+                st.success("✅ Duplicate pairs loaded.")
+                st.session_state.duplicates_ready = True
+                st.rerun()
 
-        with count_col:
-            st.write("Total Rows to Resolve:")
-            st.metric(label="Rows", value=len(st.session_state.rows))
-            reset_col, undo_col = st.columns([1, 1])
-            with reset_col:
-                if st.button("🔄 Reset"):
-                    st.session_state.rows = []
-                    st.session_state.resolved = []
-                    st.session_state.undo_buffer = []
-                    st.rerun()
-            with undo_col:
-                if st.button("↩️ Undo") and st.session_state.undo_buffer:
-                    undo_entry = st.session_state.undo_buffer.pop()
-                    st.session_state.rows.insert(0, undo_entry["row"])
-                    for val in undo_entry["resolved"]:
-                        if val in st.session_state.resolved:
-                            st.session_state.resolved.remove(val)
-                    st.rerun()
+    @staticmethod
+    def rewind_st_loaded_file():
+        uploaded_file = st.session_state.loaded_file
+        uploaded_file.seek(0)
+        return pd.read_csv(uploaded_file)
 
-        if not st.session_state.rows and not st.session_state.resolved:
-            st.info("Please upload a CSV to begin.")
+    def resolve_ui(self):
+        st.title(self.title)
+
+        # Stats
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            st.metric("Rows to Resolve", len(st.session_state.rows))
+        with col2:
+            if st.button("↩️ Undo", key="undo_button") and st.session_state.undo_buffer:
+                entry = st.session_state.undo_buffer.pop()
+                st.session_state.rows.insert(0, entry["row"])
+                for name in entry["resolved"]:
+                    if name in st.session_state.resolved:
+                        st.session_state.resolved.remove(name)
+                st.rerun()
+
+        if not st.session_state.rows:
+            st.success("✅ Resolution complete!")
+            cleaned = [n for n in st.session_state.resolved if n]
+            st.download_button("⬇️ Export Final List", "\n".join(cleaned), "resolved_inventory.csv", mime="text/csv")
             return
 
-        # Show one row at a time for resolution
-        if st.session_state.rows:
-            row = st.session_state.rows[0]
-            left, left_but, mid_but, right_but, right = st.columns([8, 1, 1, 1, 8])
-            with left:
-                st.text_input("Left", value=row['left_name'], disabled=True)
-            resolved = []
-            with left_but:
-                st.write("")
-                st.write("")
-                if st.button("⬅️"):
-                    resolved = [row['left_name']]
-            with right_but:
-                st.write("")
-                st.write("")
-                if st.button("➡️"):
-                    resolved = [row['right_name']]
-            with mid_but:
-                st.write("")
-                st.write("")
-                if st.button("↔️"):
-                    resolved = [row['left_name'], row['right_name']]
-            with right:
-                st.text_input("Right", value=row['right_name'], disabled=True)
+        row = st.session_state.rows[0]
+        left, left_but, mid_but, right_but, right = st.columns([8, 1, 1, 1, 8])
+        with left:
+            st.text_input("Left", value=row['left_name'], disabled=True)
+        resolved = []
+        with left_but:
+            st.write("")
+            if st.button("⬅️", key="choose_left"):
+                resolved = [row["left_name"]]
+        with mid_but:
+            st.write("")
+            if st.button("↔️", key="choose_both"):
+                resolved = [row["left_name"], row["right_name"]]
+        with right_but:
+            st.write("")
+            if st.button("➡️", key="choose_right"):
+                resolved = [row["right_name"]]
+        with right:
+            st.text_input("Right", value=row['right_name'], disabled=True)
 
-            if resolved:
-                st.session_state.undo_buffer.append({"row": row, "resolved": resolved})
-                st.session_state.resolved.extend(resolved)
-                st.session_state.rows.pop(0)
-                st.rerun()
+        if resolved:
+            st.session_state.undo_buffer.append({"row": row, "resolved": resolved})
+            st.session_state.resolved.extend(resolved)
+            st.session_state.rows.pop(0)
+            st.rerun()
+
+    def render(self):
+        self.init_state()  # 🛠 Ensure state variables are initialized
+        if not st.session_state.duplicates_ready:
+            self.load_file_and_configure()
         else:
-            st.success("✅ Resolution complete!")
-            clean_list = [name for name in st.session_state.resolved if name]
-            st.download_button(
-                label="Export Fixed List",
-                data="\n".join(clean_list),
-                file_name="resolved_inventory.csv",
-                mime="text/csv"
-            )
+            self.resolve_ui()
 
 
-if __name__ == '__main__':
-    page = DuplicatesPage()
-    page.render()
+if __name__ == "__main__":
+    app = DuplicatesPage()
+    app.render()

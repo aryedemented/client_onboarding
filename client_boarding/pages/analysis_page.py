@@ -1,5 +1,5 @@
 import streamlit as st
-from client_boarding.pages.base_page import BasePage
+from client_boarding.base_page import BasePage
 
 
 class AnalysisPage(BasePage):

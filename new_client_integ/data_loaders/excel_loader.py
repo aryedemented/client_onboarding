@@ -22,9 +22,10 @@ class CSVDataLoader(BaseDataLoader):
         :param file_path:
         :return:
         """
-        data = pd.read_csv(file_path)
+        data = pd.read_csv(file_path) if isinstance(file_path, str) else file_path
         filt_data = select_rows_by_dict(data, self.config["filter_by"])
-        items_list = list(filt_data[self.config["name_column"]].unique())
+        items_list = list(filt_data[self.config["name_column"]].dropna().unique())
+        print(items_list)
         items_list = [item.strip() for item in items_list]
         items_list = list(set(items_list))
         return items_list

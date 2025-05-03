@@ -15,6 +15,7 @@ from scan_text_recipes.utils.utils import initialize_pipeline_segments, read_yam
 
 class FindDuplicates:
     lemmatization_model = None
+    items_list = None
 
     def __init__(self, cfg):
         self.config = cfg
@@ -22,7 +23,9 @@ class FindDuplicates:
             package_path=LOADER_PACKAGE_PATH,
             segment_config=self.config['DATA_LOADER'],
             class_type=BaseDataLoader,
-        )[0]
+        )
+        if len(self.data_loader) > 0:  # possible to load dataloader later
+            self.data_loader = self.data_loader[0]
 
         self.pre_classifier = initialize_pipeline_segments(
             package_path=PRE_CLASSIFIERS_PATH,
@@ -87,6 +90,9 @@ class FindDuplicates:
         print("\n" * 5)
         print(f"Total pairs: {len(item_pairs)}")
         return item_pairs
+
+    def set_data_loader(self, data_loader):
+        self.data_loader = data_loader
 
     def get_items_list(self):
         """
