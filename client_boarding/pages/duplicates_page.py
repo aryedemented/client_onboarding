@@ -30,14 +30,16 @@ class DuplicatesPage:
             "loaded_file": None,
             "duplicates_ready": False,
             "show_filtered": False,
+            'full_inventory_list': [],
         }
         for k, v in defaults.items():
             if k not in st.session_state:
                 st.session_state[k] = v
 
-    def reset_state(self):
+    @staticmethod
+    def reset_state():
         for key in ["df", "columns", "name_column", "filter_config", "filter_count",
-                    "active_filter_col", "adding_filter", "rows", "resolved", "undo_buffer",
+                    "active_filter_col", "adding_filter", "rows", "resolved", "undo_buffer", "full_inventory_list",
                     "full_config", "loaded_file"]:
             st.session_state[key] = [] if isinstance(st.session_state.get(key), list) else None
         st.rerun()
@@ -119,9 +121,11 @@ class DuplicatesPage:
                     "D:\\Projects\\Kaufmann_and_Co\\recepies\\scan_code\\ScanRecepies\\new_client_integ\\duplicates_config.yaml")
                 find_duplicates = FindDuplicates(cfg=dup_config)
                 find_duplicates.set_data_loader(loader)
-
                 duplicates = find_duplicates.find_duplicates(filename=self.rewind_st_loaded_file())
                 pairs_df = pd.DataFrame(duplicates, columns=["left_name", "right_name", "score", "index1", "index2"])
+                st.session_state.full_inventory_list = find_duplicates.get_items_list()
+                print("full inventory list ######")
+                print(st.session_state.full_inventory_list)
                 st.session_state.rows = pairs_df.to_dict(orient="records")
                 st.session_state.resolved = []
                 st.session_state.undo_buffer = []
@@ -153,8 +157,34 @@ class DuplicatesPage:
 
         if not st.session_state.rows:
             st.success("✅ Resolution complete!")
-            cleaned = [n for n in st.session_state.resolved if n]
-            st.download_button("⬇️ Export Final List", "\n".join(cleaned), "resolved_inventory.csv", mime="text/csv")
+
+            clean_list = [name for name in st.session_state.full_inventory_list if name not in st.session_state.resolved]
+
+            st.download_button(
+                label="⬇️ Export Resolved Names Only",
+                data="\n".join(clean_list),
+                file_name="resolved_names_only.csv",
+                mime="text/csv"
+            )
+
+            # 🟢 Filter the original dataframe
+            if st.session_state.df is not None and st.session_state.name_column:
+                print("clean list ######")
+                print(clean_list)
+                print("Final df ######")
+                print(st.session_state.df)
+                print("Final df clean ######")
+                print(st.session_state.df[st.session_state.name_column].isin(clean_list))
+                final_df = st.session_state.df[
+                    st.session_state.df[st.session_state.name_column].isin(clean_list)
+                ]
+
+                st.download_button(
+                    label="⬇️ Export Original File with Resolved Names",
+                    data=final_df.to_csv(index=False),
+                    file_name="filtered_inventory.csv",
+                    mime="text/csv"
+                )
             return
 
         row = st.session_state.rows[0]
@@ -165,15 +195,15 @@ class DuplicatesPage:
         with left_but:
             st.write("")
             if st.button("⬅️", key="choose_left"):
-                resolved = [row["left_name"]]
+                resolved = [row["right_name"]]
         with mid_but:
             st.write("")
             if st.button("↔️", key="choose_both"):
-                resolved = [row["left_name"], row["right_name"]]
+                resolved = []
         with right_but:
             st.write("")
             if st.button("➡️", key="choose_right"):
-                resolved = [row["right_name"]]
+                resolved = [row["left_name"]]
         with right:
             st.text_input("Right", value=row['right_name'], disabled=True)
 
