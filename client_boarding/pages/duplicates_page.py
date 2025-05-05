@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 from new_client_integ.find_duplicates import FindDuplicates
 from new_client_integ.data_loaders.excel_loader import CSVDataLoader
+from new_client_integ.utils import highlight_differences
 from scan_text_recipes.utils.utils import read_yaml
 
 os.environ["STREAMLIT_WATCHER_TYPE"] = "none"
@@ -153,19 +154,14 @@ class DuplicatesPage:
                 for name in entry["resolved"]:
                     if name in st.session_state.resolved:
                         st.session_state.resolved.remove(name)
+                if "previous_rows" in entry:
+                    st.session_state.rows[1:] = entry["previous_rows"]
                 st.rerun()
 
         if not st.session_state.rows:
             st.success("✅ Resolution complete!")
 
             clean_list = [name for name in st.session_state.full_inventory_list if name not in st.session_state.resolved]
-
-            st.download_button(
-                label="⬇️ Export Resolved Names Only",
-                data="\n".join(clean_list),
-                file_name="resolved_names_only.csv",
-                mime="text/csv"
-            )
 
             # 🟢 Filter the original dataframe
             if st.session_state.df is not None and st.session_state.name_column:
@@ -178,10 +174,10 @@ class DuplicatesPage:
                 final_df = st.session_state.df[
                     st.session_state.df[st.session_state.name_column].isin(clean_list)
                 ]
-
+                csv_bytes = final_df.to_csv(index=False, encoding='utf-8-sig').encode('utf-8-sig')
                 st.download_button(
                     label="⬇️ Export Original File with Resolved Names",
-                    data=final_df.to_csv(index=False),
+                    data=csv_bytes,
                     file_name="filtered_inventory.csv",
                     mime="text/csv"
                 )
@@ -189,9 +185,10 @@ class DuplicatesPage:
 
         row = st.session_state.rows[0]
         left, left_but, mid_but, right_but, right = st.columns([8, 1, 1, 1, 8])
+        highlighted_left, highlighted_right = highlight_differences(row["left_name"], row["right_name"])
         with left:
-            st.text_input("Left", value=row['left_name'], disabled=True)
-        resolved = []
+            st.markdown(f"<div style='font-family:monospace; text-align: right; font-size:18px'>{highlighted_left}</div>", unsafe_allow_html=True)
+        resolved = None
         with left_but:
             st.write("")
             if st.button("⬅️", key="choose_left"):
@@ -205,12 +202,39 @@ class DuplicatesPage:
             if st.button("➡️", key="choose_right"):
                 resolved = [row["left_name"]]
         with right:
-            st.text_input("Right", value=row['right_name'], disabled=True)
+            st.markdown(f"<div style='font-family:monospace; text-align: left; font-size:18px'>{highlighted_right}</div>", unsafe_allow_html=True)
 
-        if resolved:
-            st.session_state.undo_buffer.append({"row": row, "resolved": resolved})
-            st.session_state.resolved.extend(resolved)
-            st.session_state.rows.pop(0)
+        if resolved is not None:
+            # Determine replacement logic
+            if not resolved:  # ↔️ different items, no replacement
+                st.session_state.undo_buffer.append({"row": row, "resolved": []})
+                st.session_state.rows.pop(0)
+                st.rerun()
+
+            replaced = resolved[0]
+            kept = row["left_name"] if replaced == row["right_name"] else row["right_name"]
+
+            # Update all remaining rows
+            updated_rows = []
+            for r in st.session_state.rows[1:]:
+                new_row = r.copy()
+                if new_row["left_name"] == replaced:
+                    new_row["left_name"] = kept
+                if new_row["right_name"] == replaced:
+                    new_row["right_name"] = kept
+                updated_rows.append(new_row)
+
+            # Save undo state
+            st.session_state.undo_buffer.append({
+                "row": row,
+                "resolved": [replaced],
+                "replacement": kept,
+                "previous_rows": st.session_state.rows[1:]  # save state for undo
+            })
+
+            # Apply updates
+            st.session_state.resolved.append(replaced)
+            st.session_state.rows = [*updated_rows]
             st.rerun()
 
     def render(self):

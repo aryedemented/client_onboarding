@@ -1,14 +1,5 @@
-embedding_params:
-  MODEL_NAME: "avichr/heBERT"
-  PCA: True
-  PCA_COMPONENTS: 50
-
-CLIENT_DATA_LOADER:
-  - CSVDataLoader:
-      config:
-        filter_by:
-          "מוצר בסיס/ חומר גלם": "חומר גלם"
-        name_column: "שם הרכיב"
+min_display_threshold: 0.75
+certain_threshold: 0.999
 
 CLASSIFIER_PARAMS:
     config:
@@ -18,7 +9,12 @@ CLASSIFIER_PARAMS:
         PCA: True
         PCA_COMPONENTS: 50
 
-
 MATCHER:
-  - CosineSimilarityMatcher:
-      threshold: 0.8
+    threshold: 0.8
+
+FINE_TUNNER:
+    config:
+      THRESHOLD: 0.7
+      embedding_params:
+        MODEL_NAME: "avichr/heBERT"
+        PCA: False

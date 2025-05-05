@@ -1,11 +1,37 @@
 import os
 import re
-from typing import Dict, Any
+from typing import Dict, Any, Tuple
 import pandas as pd
 from functools import lru_cache
+import difflib
 
 # Determine if cache should be used (e.g., skip caching in AWS Lambda)
 USE_CACHE = os.getenv('USE_CACHE', '1') == '1'
+
+
+def highlight_differences(a: str, b: str) -> Tuple[str, str]:
+    seq = difflib.SequenceMatcher(None, a, b)
+    a_out = ""
+    b_out = ""
+
+    for tag, i1, i2, j1, j2 in seq.get_opcodes():
+        if tag == "equal":
+            a_out += a[i1:i2]
+            b_out += b[j1:j2]
+        else:
+            a_out += f"<span style='color:red'>{a[i1:i2]}</span>"
+            b_out += f"<span style='color:red'>{b[j1:j2]}</span>"
+
+    # Frame with styled div (simulates a textbox)
+    box_style = (
+        "border:1px solid #ccc; padding:10px; margin:5px 0; "
+        "border-radius:5px; background-color:#f9f9f9; "
+        f"direction: rtl; font-size: 18px; font-family: monospace;"
+    )
+    a_out = f"<div style='{box_style}'>{a_out}</div>"
+    b_out = f"<div style='{box_style}'>{b_out}</div>"
+
+    return a_out, b_out
 
 
 def conditional_cache(maxsize=128):

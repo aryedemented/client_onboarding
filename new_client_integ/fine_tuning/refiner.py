@@ -53,9 +53,10 @@ class MinimalSimilarityRefiner(BaseRefiner, EmbeddingClassifier):
         """
         Splits the phrase into words.
         """
-        return [clean_text(word) for word in phrase.split()]
+        words = [clean_text(word) for word in phrase.split()]
+        return [word for word in words if word != '']
 
-    def refine(self, data: List[Tuple[str, str, float, int, int]], emb_dict: Dict = None) -> List[Tuple[str, str, float, int, int]]:
+    def get_word_bag_scores(self, data: List[Tuple[str, str, float, int, int]], emb_dict: Dict = None) -> List[Tuple[str, str, float, int, int]]:
         """
         Refine the data based on similarity scores.
         """
@@ -67,9 +68,32 @@ class MinimalSimilarityRefiner(BaseRefiner, EmbeddingClassifier):
             inj2_words = self.split_words(ing2)
             new_score = self.gen_score(inj1_words, inj2_words, emb_dict)
             items.append((ing1, ing2, new_score, idx1, idx2))
-        # Sort threshold
+        return items
+
+    def refine(self, data: List[Tuple[str, str, float, int, int]], emb_dict: Dict = None) -> List[Tuple[str, str, float, int, int]]:
+        """
+        Refine the data based on similarity scores.
+        """
+        items = self.get_word_bag_scores(data, emb_dict)
         items = [item for item in items if item[2] > self.config["THRESHOLD"]]
         return items
+
+    def get_bag_of_words_similarity_matrix(self, client_list: List[str], inventory_list: List[str],
+                                           emb_dict: Dict) -> np.ndarray:
+        """
+        Compute a similarity matrix between two lists of ingredient strings
+        using bag-of-words average embeddings (ignores word order).
+        """
+
+        def average_embedding(words: List[str]) -> np.ndarray:
+            vectors = self.get_embedding(words, emb_dict, apply_lemmatization=self.apply_lemmatization)
+            return np.mean(vectors, axis=0) if len(vectors) > 0 else np.zeros(
+                (emb_dict[next(iter(emb_dict))].shape[0],))
+
+        client_embeddings = [average_embedding(self.split_words(item)) for item in client_list]
+        inventory_embeddings = [average_embedding(self.split_words(item)) for item in inventory_list]
+
+        return cosine_similarity(client_embeddings, inventory_embeddings)
 
     def get_embedding(self, words: List[str], emb_dict: Dict, apply_lemmatization: bool = False) -> np.ndarray:
         """
@@ -95,6 +119,13 @@ class MinimalSimilarityRefiner(BaseRefiner, EmbeddingClassifier):
 
         similarity_matrix = cosine_similarity(embed1, embed2)
         return self.minimal_of_maximal_similarity_full(similarity_matrix)
+
+    @staticmethod
+    def filtered_minimal_of_maximal(similarity_matrix, threshold=0.3):
+        max_per_row = similarity_matrix.max(axis=1)
+        max_per_col = similarity_matrix.max(axis=0)
+        filtered = np.concatenate([max_per_row[max_per_row > threshold], max_per_col[max_per_col > threshold]])
+        return filtered.min() if len(filtered) > 0 else 0
 
     @staticmethod
     def minimal_of_maximal_similarity_full(similarity_matrix):

@@ -31,6 +31,30 @@ class CSVDataLoader(BaseDataLoader):
         return items_list
 
 
+class InventoryLoader(BaseDataLoader):
+    _inventory: None
+
+    def __init__(self, config):
+        super().__init__(config)
+
+    def load(self, file_path):
+        """
+        Load data from a CSV file and filter it based on the provided configuration.
+        :param file_path:
+        :return:
+        """
+        data = pd.read_csv(file_path) if isinstance(file_path, str) else file_path
+        # filt_data = select_rows_by_dict(data, self.config["filter_by"])
+        items_df = data[[self.config["id_column"], self.config["name_column"]]].dropna()
+        items_df.rename(columns={self.config["id_column"]: "_id", self.config["name_column"]: "_name"}, inplace=True)
+        self._inventory = items_df
+        return items_df
+
+    @property
+    def inventory(self):
+        return self._inventory if self._inventory is not None else pd.DataFrame()
+
+
 class CSVListLoader(BaseDataLoader):
     def __init__(self, config):
         super().__init__(config)

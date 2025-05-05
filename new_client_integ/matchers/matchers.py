@@ -60,9 +60,11 @@ class FuzzyMatcher(BaseMatcher):
 
 
 class CosineSimilarityMatcher(BaseMatcher, EmbeddingClassifier):
-    def __init__(self, threshold=0.8):
+    def __init__(self, threshold=0.8, **kwargs):
         super().__init__("CosineSimilarityMatcher")
         self.threshold = threshold
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
     def match(self, client, inventory):
         matched_items = []
