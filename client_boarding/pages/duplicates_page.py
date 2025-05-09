@@ -57,7 +57,7 @@ class DuplicatesPage:
         with col_upload:
             uploaded_file = st.file_uploader("Upload CSV", type=["csv"], key="file_upload")
             if uploaded_file and st.session_state.df is None:
-                df = pd.read_csv(uploaded_file)
+                df = pd.read_csv(uploaded_file, encoding='utf-8')
                 df = df.loc[:, ~df.columns.str.startswith("Unnamed")]
                 st.session_state.df = df
                 st.session_state.columns = df.columns.tolist()
@@ -143,7 +143,7 @@ class DuplicatesPage:
     def rewind_st_loaded_file():
         uploaded_file = st.session_state.loaded_file
         uploaded_file.seek(0)
-        return pd.read_csv(uploaded_file)
+        return pd.read_csv(uploaded_file, encoding='utf-8')
 
     def resolve_ui(self):
         st.title(self.title)

@@ -52,7 +52,7 @@ class MatchPage(DuplicatesPage):
         inv_file = st.file_uploader("Upload Inventory CSV", type="csv", key="inv_file")
 
         if inv_file and st.session_state.inventory_df is None:
-            inv_df = pd.read_csv(inv_file)
+            inv_df = pd.read_csv(inv_file, encoding='utf-8')
             inv_df = inv_df.loc[:, ~inv_df.columns.str.startswith("Unnamed")]
             st.session_state.inventory_df = inv_df
             st.session_state.inv_columns = inv_df.columns.tolist()
@@ -67,7 +67,7 @@ class MatchPage(DuplicatesPage):
         client_file = st.file_uploader("Upload Client CSV", type="csv", key="client_file")
 
         if client_file and st.session_state.client_df is None:
-            client_df = pd.read_csv(client_file)
+            client_df = pd.read_csv(client_file, encoding='utf-8')
             client_df = client_df.loc[:, ~client_df.columns.str.startswith("Unnamed")]
             st.session_state.client_df = client_df
             st.session_state.client_columns = client_df.columns.tolist()

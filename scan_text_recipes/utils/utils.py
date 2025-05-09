@@ -34,8 +34,6 @@ def remove_special_characters(text_recipe: str) -> str:
 
 
 def read_yaml(filename: str, **kwargs) -> Dict:
-    import streamlit as st
-    st.write("📂 Trying to open:", filename)
     with open(filename, 'r', encoding="utf-8", **kwargs) as file:
         data = yaml.safe_load(file)
     return data

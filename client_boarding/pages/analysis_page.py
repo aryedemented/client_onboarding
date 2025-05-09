@@ -15,6 +15,6 @@ class AnalysisPage(BasePage):
             # Load CSV and find duplicates
             import pandas as pd
             st.write("Duplicates page")
-            df = pd.read_csv(uploaded_file)
+            df = pd.read_csv(uploaded_file, encoding='utf-8')
             # result = matching_inventory(df)
             # st.write("Duplicates Found:", result)
