@@ -99,7 +99,7 @@ class MatchPage(DuplicatesPage):
         ]):
             return
 
-        cfg = read_yaml(os.path.join(PROJECT_ROOT, "new_client_integ\\matcher_config.yaml"))
+        cfg = read_yaml(os.path.join(PROJECT_ROOT, "new_client_integ', 'matcher_config.yaml"))
         st.session_state.config = cfg
         st.session_state.matcher = FindMatches(cfg=cfg)
 
