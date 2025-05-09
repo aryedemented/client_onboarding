@@ -2,7 +2,7 @@ import os
 import streamlit as st
 import pandas as pd
 
-from client_boarding import PROJECT_ROOT
+from client_boarding.utils.paths import PROJECT_ROOT
 from client_boarding.pages.duplicates_page import DuplicatesPage
 from new_client_integ.find_matches import FindMatches
 from new_client_integ.data_loaders.excel_loader import CSVDataLoader, InventoryLoader

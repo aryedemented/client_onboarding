@@ -2,7 +2,7 @@ import os
 import streamlit as st
 import pandas as pd
 
-from client_boarding import PROJECT_ROOT
+from client_boarding.utils.paths import PROJECT_ROOT
 from new_client_integ.find_duplicates import FindDuplicates
 from new_client_integ.data_loaders.excel_loader import CSVDataLoader
 from new_client_integ.utils import highlight_differences
