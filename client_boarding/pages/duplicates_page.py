@@ -124,7 +124,7 @@ class DuplicatesPage:
 
             # Now show "Find Duplicates" button
             if st.button("🔍 Find Duplicates"):
-                dup_config = read_yaml(os.path.join(PROJECT_ROOT, "new_client_integ', 'duplicates_config.yaml"))
+                dup_config = read_yaml(os.path.join(PROJECT_ROOT, "new_client_integ", "duplicates_config.yaml"))
                 find_duplicates = FindDuplicates(cfg=dup_config)
                 find_duplicates.set_data_loader(loader)
                 duplicates = find_duplicates.find_duplicates(filename=self.rewind_st_loaded_file())
