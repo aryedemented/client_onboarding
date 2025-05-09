@@ -2,6 +2,7 @@ import os
 import streamlit as st
 import pandas as pd
 
+from client_boarding import PROJECT_ROOT
 from client_boarding.pages.duplicates_page import DuplicatesPage
 from new_client_integ.find_matches import FindMatches
 from new_client_integ.data_loaders.excel_loader import CSVDataLoader, InventoryLoader
@@ -94,8 +95,7 @@ class MatchPage(DuplicatesPage):
         ]):
             return
 
-        cfg = read_yaml(
-            "D:\\Projects\\Kaufmann_and_Co\\recepies\\scan_code\\ScanRecepies\\new_client_integ\\matcher_config.yaml")
+        cfg = read_yaml(PROJECT_ROOT + "..\\new_client_integ\\matcher_config.yaml")
         st.session_state.config = cfg
         st.session_state.matcher = FindMatches(cfg=cfg)
 

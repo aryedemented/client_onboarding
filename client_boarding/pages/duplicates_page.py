@@ -1,6 +1,8 @@
 import os
 import streamlit as st
 import pandas as pd
+
+from client_boarding import PROJECT_ROOT
 from new_client_integ.find_duplicates import FindDuplicates
 from new_client_integ.data_loaders.excel_loader import CSVDataLoader
 from new_client_integ.utils import highlight_differences
@@ -118,8 +120,7 @@ class DuplicatesPage:
 
             # Now show "Find Duplicates" button
             if st.button("🔍 Find Duplicates"):
-                dup_config = read_yaml(
-                    "D:\\Projects\\Kaufmann_and_Co\\recepies\\scan_code\\ScanRecepies\\new_client_integ\\duplicates_config.yaml")
+                dup_config = read_yaml(PROJECT_ROOT + "..\\new_client_integ\\duplicates_config.yaml")
                 find_duplicates = FindDuplicates(cfg=dup_config)
                 find_duplicates.set_data_loader(loader)
                 duplicates = find_duplicates.find_duplicates(filename=self.rewind_st_loaded_file())
