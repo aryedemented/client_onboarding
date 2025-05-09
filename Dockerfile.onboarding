@@ -1,7 +1,13 @@
 FROM python:3.10-slim
-WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/ScanRecepies
+
+WORKDIR /ScanRecepies
+
 COPY requirements.txt .
-RUN pip install -r requirements.txt
-COPY cheflowlib/ cheflowlib/
-COPY onboarding_dedupe/ .
-CMD ["streamlit", "run", "run_onboarding.py", "--server.port=8501", "--server.address=0.0.0.0"]
+RUN pip install --upgrade pip && pip install -r requirements.txt
+COPY . .
+
+CMD ["python", "client_onboarding/run_onboarding.py", "--server.port=8501", "--server.address=0.0.0.0"]
