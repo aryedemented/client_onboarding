@@ -1,8 +1,11 @@
 # Use these examples for tests
 import os
 from typing import Dict
+import sys
 
-from scan_text_recipes import PROJECT_ROOT
+# Add the repo root (parent of client_boarding) to sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+from scan_text_recipes.utils.paths import PROJECT_ROOT
 from scan_text_recipes.utils.utils import read_yaml, read_text, read_jinja_config
 
 

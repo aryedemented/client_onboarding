@@ -5,8 +5,11 @@ from typing import Dict, List
 from collections import defaultdict, deque
 
 from matplotlib import pyplot as plt, cm
+import sys
 
-from scan_text_recipes import PROJECT_ROOT
+# Add the repo root (parent of client_boarding) to sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+from scan_text_recipes.utils.paths import PROJECT_ROOT
 from scan_text_recipes.uploader_tool.src.st_utils import reshape_hebrew
 from scan_text_recipes.utils.utils import read_yaml
 

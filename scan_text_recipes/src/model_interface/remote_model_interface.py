@@ -4,9 +4,12 @@ from typing import Dict, List
 
 import openai
 import json
+import sys
 
+# Add the repo root (parent of client_boarding) to sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 from openai.types.chat import ChatCompletion
-from scan_text_recipes import PROJECT_ROOT
+from scan_text_recipes.utils.paths import PROJECT_ROOT
 from scan_text_recipes.src import LOGGER_PACKAGE_PATH
 from scan_text_recipes.src.prompt_organizers.default_prompt_container import DefaultPromptsContainer
 from scan_text_recipes.tests.examples_for_tests import load_unstructured_text_test_recipe, load_test_setup_config

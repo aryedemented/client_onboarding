@@ -2,8 +2,11 @@ import copy
 import os
 from abc import abstractmethod
 from typing import Dict, List
+import sys
 
-from scan_text_recipes import PROJECT_ROOT
+# Add the repo root (parent of client_boarding) to sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+from scan_text_recipes.utils.paths import PROJECT_ROOT
 from scan_text_recipes.src.issues_class_format import SupplementaryPromptQuestion
 from scan_text_recipes.src.postprocessors.recipe_fixers.default_fixers import RecipeFixer
 from scan_text_recipes.tests.examples_for_tests import load_structured_test_recipe, load_unstructured_text_test_recipe, \

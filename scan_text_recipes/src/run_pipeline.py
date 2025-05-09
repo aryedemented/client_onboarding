@@ -9,8 +9,11 @@ import boto3
 
 import os
 from typing import Dict
+import sys
 
-from scan_text_recipes import PROJECT_ROOT
+# Add the repo root (parent of client_boarding) to sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+from scan_text_recipes.utils.paths import PROJECT_ROOT
 from scan_text_recipes.src import PRE_PROCESSORS_PACKAGE_PATH, MAIN_PROCESSORS_PACKAGE_PATH, \
     POST_PROCESSORS_PACKAGE_PATH, DB_PACKAGE_PATH, LOGGER_PACKAGE_PATH
 from scan_text_recipes.src.db_interface.db_interface import BaseDatabaseInterface

@@ -7,8 +7,11 @@ from pyvis.network import Network
 import streamlit as st
 from streamlit.components.v1 import html
 import tempfile
+import sys
 
-from scan_text_recipes import PROJECT_ROOT
+# Add the repo root (parent of client_boarding) to sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+from scan_text_recipes.utils.paths import PROJECT_ROOT
 from scan_text_recipes.src.run_pipeline import ReadRecipePipeline
 from scan_text_recipes.uploader_tool.src.recipe_scheduler_utils import build_schedule, plot_schedule
 from scan_text_recipes.uploader_tool.src.st_utils import hebrew_text
