@@ -1,6 +1,10 @@
 import os
 import streamlit as st
 import pandas as pd
+import sys
+
+# Add the repo root (parent of client_boarding) to sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 from client_boarding.utils.paths import PROJECT_ROOT
 from client_boarding.pages.duplicates_page import DuplicatesPage
