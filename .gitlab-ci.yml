@@ -1,0 +1,30 @@
+stages:
+  - build
+  - deploy
+
+variables:
+  RECIPE_TAG: $CI_REGISTRY_IMAGE/recipe-parser:latest
+  ONBOARDING_TAG: $CI_REGISTRY_IMAGE/onboarding-ui:latest
+
+build_recipe:
+  stage: build
+  script:
+    - docker build -f Dockerfile.recipe -t $RECIPE_TAG .
+    - docker push $RECIPE_TAG
+  only:
+    - recipe
+
+build_onboarding:
+  stage: build
+  script:
+    - docker build -f Dockerfile.onboarding -t $ONBOARDING_TAG .
+    - docker push $ONBOARDING_TAG
+  only:
+    - onboarding
+
+deploy_onboarding:
+  stage: deploy
+  script:
+    - ssh $SSH_USER@$SERVER_IP "docker pull $ONBOARDING_TAG && docker stop onboarding || true && docker rm onboarding || true && docker run -d -p 8501:8501 --name onboarding $ONBOARDING_TAG"
+  only:
+    - onboarding
